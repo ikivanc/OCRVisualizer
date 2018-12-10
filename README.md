@@ -20,14 +20,14 @@ const string uriBase ="https://northeurope.api.cognitive.microsoft.com/vision/v2
 
 Here are some examples of of output of documents.
 
-OCR from full page documents 
-![](screenshots/ocroutput.png)
+OCR for unstuctured documents.
+![](screenshots/ocroutput2.png)
 
 OCR for a part of documents
 ![](screenshots/ocroutput1.png)
 
-OCR for unstuctured documents.
-![](screenshots/ocroutput2.png)
+OCR from full page documents 
+![](screenshots/ocroutput.png)
 
 
 For more information about Optical character recognition (OCR) in images | [Demo](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision/#text) | [Container Support](https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/computer-vision-how-to-install-containers)
