@@ -9,7 +9,7 @@
     <Grid x:Name="gridCanvas">
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0,0,0,60">
             <Canvas x:Name="canvasImg">
-                <Image x:Name="imgInvoice" HorizontalAlignment="Left" Stretch="None" VerticalAlignment="Top"/>
+                <Image x:Name="imgInvoice" Stretch="Fill"/>
                 <Canvas x:Name="canvas"/>
             </Canvas>
         </ScrollViewer>

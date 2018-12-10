@@ -35,8 +35,9 @@ namespace OCRVisualizer
         private static Brush _highlightColor = Brushes.Black;
 
         // Microsoft Cognitive Services Computer Vision Endpoint details.
-        const string subscriptionKey = "YOUR_COMPUTER_VISION_API_KEY";
+        const string subscriptionKey = "YOUR_CUMPUTER_VISION_API_KEY";
         const string uriBase = "https://northeurope.api.cognitive.microsoft.com/vision/v2.0/ocr";
+        private double DPIrenderSize;
 
         public MainWindow()
         {
@@ -87,10 +88,10 @@ namespace OCRVisualizer
         {
             // Detect the edges & size values of the box
             int[] values = Array.ConvertAll(boundingBox.Split(','), int.Parse);
-            int width = values[2];
-            int height = values[3];
-            int left = values[0];
-            int top = values[1];
+            int width = (int)(values[2]/ DPIrenderSize);
+            int height = (int)(values[3] / DPIrenderSize);
+            int left = (int)(values[0] / DPIrenderSize);
+            int top = (int)(values[1] / DPIrenderSize);
 
             // Create the rectangle
             Rectangle rec = new Rectangle()
@@ -116,10 +117,10 @@ namespace OCRVisualizer
         {
             // Detect the edges & size values of the box
             int[] values = Array.ConvertAll(boundingBox.Split(','), int.Parse);
-            int width = values[2];
-            int height = values[3];
-            int left = values[0];
-            int top = values[1];
+            int width = (int)(values[2] / DPIrenderSize);
+            int height = (int)(values[3] / DPIrenderSize);
+            int left = (int)(values[0] / DPIrenderSize);
+            int top = (int)(values[1] / DPIrenderSize);
 
             // Create the rectangle
             Rectangle rec = new Rectangle()
@@ -271,9 +272,14 @@ namespace OCRVisualizer
 
             canvasImg.Height = bitmapSource.Height;
             canvasImg.Width = bitmapSource.Width;
+            
             canvas.Height = bitmapSource.Height;
             canvas.Width = bitmapSource.Width;
 
+            // This is for calculating RenderSize on the screen
+            DPIrenderSize = bitmapSource.PixelHeight / bitmapSource.Height;
+            
+            imgInvoice.Stretch = Stretch.Fill;
             imgInvoice.Source = bitmapSource;
 
             canvas.Children.Clear();
