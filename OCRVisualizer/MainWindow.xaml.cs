@@ -239,19 +239,7 @@ namespace OCRVisualizer
                 return binaryReader.ReadBytes((int)fileStream.Length);
             }
         }
-
-        private void ButtonVisiblity_Click(object sender, RoutedEventArgs e)
-        {
-            if (canvas.Visibility == Visibility.Visible)
-            {
-                canvas.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                canvas.Visibility = Visibility.Visible;
-            }
-        }
-
+    
         private async void ButtonBrowse_Click(object sender, RoutedEventArgs e)
         {
             var openDlg = new Microsoft.Win32.OpenFileDialog();
@@ -288,5 +276,41 @@ namespace OCRVisualizer
 
         }
 
+        private void ButtonVisiblity_Click(object sender, RoutedEventArgs e)
+        {
+            if (canvas.Visibility == Visibility.Visible)
+            {
+                canvas.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                canvas.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ButtonVisiblityOutPut_Click(object sender, RoutedEventArgs e)
+        {
+            if (stckOutput.Visibility == Visibility.Visible)
+            {
+                stckOutput.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                stckOutput.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ButtonSettings_Click(object sender, RoutedEventArgs e)
+        {
+            if (stckSettings.Visibility == Visibility.Visible)
+            {
+                stckSettings.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                stckSettings.Visibility = Visibility.Visible;
+            }
+
+        }
     }
 }
