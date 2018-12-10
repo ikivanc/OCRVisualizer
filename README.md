@@ -1,5 +1,5 @@
 # OCR Visualizer
-OCRVisualizer is a tool to visualize Microsoft Cognitive Services OCR API json output to get familiar with bounding boxes of Regions, Lines and Words.
+OCRVisualizer is a tool to visualize Microsoft Cognitive Services OCR API json output to get familiar with bounding boxes of Regions, Lines and Words. It's written in C#/WPF.
 
 This tool will be helful for your data discovery, if you use OCR with your documents.
 
@@ -8,6 +8,15 @@ In this version;
 * You can see Bonding boxes of Regions, Lines and Words
 * You can see extracted text over your original document
 * You can extract full text as output
+
+## Build the project
+
+Please chance in `Mainpage.xaml.cs` file below code snippet with your Cognitive Services Computer Vision API subscription key and if your service hosted other than `northeurope` region, change the region with yours. 
+```csharp
+// Microsoft Cognitive Services Computer Vision Endpoint details.
+const string subscriptionKey = "YOUR_CUMPUTER_VISION_API_KEY";
+const string uriBase ="https://northeurope.api.cognitive.microsoft.com/vision/v2.0/ocr";
+```
 
 Here are some examples of of output of documents.
 
