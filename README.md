@@ -11,11 +11,21 @@ In this version;
 
 ## Build the project
 
-Please chance in `Mainpage.xaml.cs` file below code snippet with your Cognitive Services Computer Vision API subscription key and if your service hosted other than `northeurope` region, change the region with yours. 
-```csharp
-// Microsoft Cognitive Services Computer Vision Endpoint details.
-const string subscriptionKey = "YOUR_CUMPUTER_VISION_API_KEY";
-const string uriBase ="https://northeurope.api.cognitive.microsoft.com/vision/v2.0/ocr";
+Please change in `App.config` file below code snippet with your Cognitive Services Computer Vision API subscription key and if your service hosted other than `northeurope` region, change the region with yours.
+
+Microsoft Cognitive Services Computer Vision Endpoint details.
+
+```json
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <startup>
+    <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.6.1" />
+  </startup>
+  <appSettings>
+    <add key="subscriptionKey" value="YOUR_COMPUTER_VISION_API_KEY" />
+    <add key="endpointRegion" value="https://northeurope.api.cognitive.microsoft.com/vision/v2.0/ocr" />
+  </appSettings>
+</configuration>
 ```
 
 Here are some examples of of output of documents.
