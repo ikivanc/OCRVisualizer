@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -18,6 +19,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml;
 
 namespace OCRVisualizer
 {
@@ -35,8 +37,8 @@ namespace OCRVisualizer
         private static Brush _highlightColor = Brushes.Black;
 
         // Microsoft Cognitive Services Computer Vision Endpoint details.
-        const string subscriptionKey = "YOUR_CUMPUTER_VISION_API_KEY";
-        const string uriBase = "https://northeurope.api.cognitive.microsoft.com/vision/v2.0/ocr";
+        private string subscriptionKey = ConfigurationManager.AppSettings["subscriptionKey"].ToString();
+        private string uriEndpoint = ConfigurationManager.AppSettings["endpointRegion"].ToString();
         private double DPIrenderSize;
 
         public MainWindow()
@@ -45,7 +47,7 @@ namespace OCRVisualizer
         }
 
         // Extract Text & Text Regions 
-        public void ExtractTextAndRegionsFromResponse()
+        private void ExtractTextAndRegionsFromResponse()
         {
             var response = JObject.Parse(OCRResponse);
 
@@ -168,7 +170,7 @@ namespace OCRVisualizer
         }
 
         // Extract full text from the response
-        public static string ExtractTextFromResponse(JObject responseJson)
+        private static string ExtractTextFromResponse(JObject responseJson)
         {
             return string.Join(" ", from r in responseJson["regions"]
                                     from l in r["lines"]
@@ -177,7 +179,7 @@ namespace OCRVisualizer
         }
 
         // Microsoft Cognitive Services Computer Vision OCR Method
-        static async Task<string> MakeOCRRequest(string imageFilePath)
+        private async Task<string> MakeOCRRequest(string imageFilePath)
         {
             try
             {
@@ -195,7 +197,7 @@ namespace OCRVisualizer
                 string requestParameters = "language=unk&detectOrientation=true";
 
                 // Assemble the URI for the REST API method.
-                string uri = uriBase + "?" + requestParameters;
+                string uri = uriEndpoint + "?" + requestParameters;
 
                 HttpResponseMessage response;
 
@@ -308,9 +310,33 @@ namespace OCRVisualizer
             }
             else
             {
+                txtSubscriptionKey.Text = subscriptionKey;
+                txtEndPoint.Text = uriEndpoint;
                 stckSettings.Visibility = Visibility.Visible;
             }
+        }
 
+        private void ButtonSettingsUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateConnectionKeys(txtSubscriptionKey.Text, txtEndPoint.Text);
+            subscriptionKey = txtSubscriptionKey.Text;
+            uriEndpoint = txtEndPoint.Text;
+        }
+
+        public void UpdateConnectionKeys(string subscriptionValue, string endpointValue)
+        {
+            XmlDocument appconfigFile = new XmlDocument();
+            appconfigFile.Load(AppDomain.CurrentDomain.BaseDirectory + "..\\..\\App.config");
+            XmlNode appSettingsNode = appconfigFile.SelectSingleNode("configuration/appSettings");
+
+            foreach (XmlNode childNode in appSettingsNode)
+            {
+                if (childNode.Attributes["key"].Value == "subscriptionKey") childNode.Attributes["value"].Value = subscriptionValue;
+                else if (childNode.Attributes["key"].Value == "endpointRegion") childNode.Attributes["value"].Value = endpointValue;
+            }
+            appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "..\\..\\App.config");
+            appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
+            MessageBox.Show("Keys are updated!");
         }
     }
 }

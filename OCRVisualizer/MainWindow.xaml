@@ -15,7 +15,7 @@
                 <Canvas x:Name="canvas"/>
             </Canvas>
         </ScrollViewer>
-        <StackPanel x:Name="stckSettings" Margin="0,20,5.286,0" HorizontalAlignment="Right" VerticalAlignment="Top" Height="321" Width="261" Background="#FFF1F1F1" IsEnabled="False" Visibility="Collapsed">
+        <StackPanel x:Name="stckSettings" Margin="0,20,5.286,0" HorizontalAlignment="Right" VerticalAlignment="Top" Height="321" Width="261" Background="#FFF1F1F1" Visibility="Collapsed">
             <TextBlock Margin="5,10,5,0" Text="* Settings section is not implemented yet" />
 
             <TextBlock Text="Settings" FontSize="20" Margin="5,0" />
@@ -32,6 +32,8 @@
             <TextBox x:Name="txtEndPoint" Margin="5,0" />
             <TextBlock Margin="5,5,5,0" Text="Subscription Key:" />
             <TextBox x:Name="txtSubscriptionKey" Margin="5,0" />
+            <Button Margin="5,5,5,0" Content="Update" Click="ButtonSettingsUpdate_Click"/>
+            
         </StackPanel>
         <StackPanel x:Name="stckOutput" Orientation="Vertical" VerticalAlignment="Bottom" Height="60" Margin="5,0,5,5">
             <TextBlock Text="Output:"/>
