@@ -326,7 +326,7 @@ namespace OCRVisualizer
         public void UpdateConnectionKeys(string subscriptionValue, string endpointValue)
         {
             XmlDocument appconfigFile = new XmlDocument();
-            appconfigFile.Load(AppDomain.CurrentDomain.BaseDirectory + "..\\..\\App.config");
+            appconfigFile.Load(AppDomain.CurrentDomain.BaseDirectory + "App.config");
             XmlNode appSettingsNode = appconfigFile.SelectSingleNode("configuration/appSettings");
 
             foreach (XmlNode childNode in appSettingsNode)
@@ -334,7 +334,7 @@ namespace OCRVisualizer
                 if (childNode.Attributes["key"].Value == "subscriptionKey") childNode.Attributes["value"].Value = subscriptionValue;
                 else if (childNode.Attributes["key"].Value == "endpointRegion") childNode.Attributes["value"].Value = endpointValue;
             }
-            appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "..\\..\\App.config");
+            appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
             appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
             MessageBox.Show("Keys are updated!");
         }

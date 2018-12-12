@@ -9,6 +9,14 @@ In this version;
 * You can see extracted text over your original document
 * You can extract full text as output
 
+## Run Executable File
+If you would like to test OCR visualizer on your local, download Setup File and update with your `subscription Key` and `endpoint` in `OCR Settings`. After defining your endpoint you can visualize your OCR documents via `Browse`.
+
+* [Download OCRVisualizer Executable File on Windows](Setup/Release_Setup.zip) 
+
+![](screenshots/setup.png)
+
+
 ## Build the project
 
 Please change in `App.config` file below code snippet with your Cognitive Services Computer Vision API subscription key and if your service hosted other than `northeurope` region, change the region with yours.
