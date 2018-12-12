@@ -39,11 +39,23 @@ namespace OCRVisualizer
         // Microsoft Cognitive Services Computer Vision Endpoint details.
         private string subscriptionKey = ConfigurationManager.AppSettings["subscriptionKey"].ToString();
         private string uriEndpoint = ConfigurationManager.AppSettings["endpointRegion"].ToString();
+        private string docLanguage = ConfigurationManager.AppSettings["documentLanguage"].ToString();
         private double DPIrenderSize;
 
         public MainWindow()
         {
             InitializeComponent();
+            InitUI();
+        }
+
+        private void InitUI()
+        {
+            // Set the index of selected language
+            if (comboLanguage.SelectedIndex == -1)
+            {
+                var comboBoxItem = comboLanguage.Items.OfType<ComboBoxItem>().FirstOrDefault(x => x.Content.ToString().Contains(docLanguage));
+                comboLanguage.SelectedIndex = comboLanguage.Items.IndexOf(comboBoxItem);
+            }
         }
 
         // Extract Text & Text Regions 
@@ -63,12 +75,16 @@ namespace OCRVisualizer
 
                 foreach (WLine sline in ereg.Lines)
                 {
-                    string line = string.Join(" ", from Word sword in sline.Words
-                                                   select (string)sword.Text);
+                    // Draw rectangles for the lines
+                    CreateRectangle(sline.BoundingBox, _lineColor);
+
+                    //string line = string.Join(" ", from Word sword in sline.Words
+                    //                               select (string)sword.Text);
+
 
                     foreach (Word sword in sline.Words)
                     {
-                        // Draw rectangles for the lines
+                        // Draw rectangles for the words
                         CreateRectangle(sword.BoundingBox, _wordColor);
                         CreateImageLabels(sword.BoundingBox, sword.Text);
                     }
@@ -194,7 +210,8 @@ namespace OCRVisualizer
                 // method detects it automatically.
                 // The detectOrientation parameter is set to true, so the method detects and
                 // and corrects text orientation before detecting text.
-                string requestParameters = "language=unk&detectOrientation=true";
+
+                string requestParameters = String.Format("language={0}&detectOrientation=true",docLanguage);
 
                 // Assemble the URI for the REST API method.
                 string uri = uriEndpoint + "?" + requestParameters;
@@ -312,18 +329,21 @@ namespace OCRVisualizer
             {
                 txtSubscriptionKey.Text = subscriptionKey;
                 txtEndPoint.Text = uriEndpoint;
+                comboLanguage.SelectedItem = docLanguage;
                 stckSettings.Visibility = Visibility.Visible;
             }
         }
 
         private void ButtonSettingsUpdate_Click(object sender, RoutedEventArgs e)
         {
-            UpdateConnectionKeys(txtSubscriptionKey.Text, txtEndPoint.Text);
             subscriptionKey = txtSubscriptionKey.Text;
             uriEndpoint = txtEndPoint.Text;
+            docLanguage = (comboLanguage.SelectedValue as ComboBoxItem).Content as string;
+
+            UpdateConnectionKeys(subscriptionKey, uriEndpoint, docLanguage);
         }
 
-        public void UpdateConnectionKeys(string subscriptionValue, string endpointValue)
+        public void UpdateConnectionKeys(string subscriptionValue, string endpointValue, string languageValue)
         {
             XmlDocument appconfigFile = new XmlDocument();
             appconfigFile.Load(AppDomain.CurrentDomain.BaseDirectory + "App.config");
@@ -333,10 +353,21 @@ namespace OCRVisualizer
             {
                 if (childNode.Attributes["key"].Value == "subscriptionKey") childNode.Attributes["value"].Value = subscriptionValue;
                 else if (childNode.Attributes["key"].Value == "endpointRegion") childNode.Attributes["value"].Value = endpointValue;
+                else if (childNode.Attributes["key"].Value == "documentLanguage") childNode.Attributes["value"].Value = languageValue;
             }
             appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
             appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
-            MessageBox.Show("Keys are updated!");
+            MessageBox.Show("Fields are updated!");
+        }
+
+        private void ComboLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // pick the only language code of the combobox text
+            docLanguage = ((comboLanguage.SelectedValue as ComboBoxItem).Content as string).Split(' ')[0];
+            if (string.IsNullOrEmpty(docLanguage))
+            {
+                docLanguage = "unk";
+            }
         }
     }
 }

@@ -19,12 +19,36 @@
             <TextBlock Margin="5,10,5,0" Text="* Settings section is not implemented yet" />
 
             <TextBlock Text="Settings" FontSize="20" Margin="5,0" />
-            <CheckBox Content="Enable handwriting?" Margin="5,10,5,0" />
+            <CheckBox Content="Enable handwriting?" Margin="5,10,5,0" IsEnabled="False" />
             <TextBlock Margin="5,5,5,0" Text="Document Language:" />
-            <ComboBox SelectedIndex="0" Margin="5,0" >
-                <ComboBoxItem Content="en-US"/>
-                <ComboBoxItem Content="tr-TR"/>
-                <ComboBoxItem Content="fr-FR"/>
+            <ComboBox x:Name="comboLanguage" SelectedIndex="-1" Margin="5,0" SelectionChanged="ComboLanguage_SelectionChanged" >
+                <ComboBoxItem Content="unk (AutoDetect)"/>
+                <ComboBoxItem Content="zh-Hans (ChineseSimplified)"/>
+                <ComboBoxItem Content="zh-Hant (ChineseTraditional)"/>
+                <ComboBoxItem Content="cs (Czech)"/>
+                <ComboBoxItem Content="da (Danish)"/>
+                <ComboBoxItem Content="nl (Dutch)"/>
+                <ComboBoxItem Content="en (English)"/>
+                <ComboBoxItem Content="fi (Finnish)"/>
+                <ComboBoxItem Content="fr (French)"/>
+                <ComboBoxItem Content="de (German)"/>
+                <ComboBoxItem Content="el (Greek)"/>
+                <ComboBoxItem Content="hu (Hungarian)"/>
+                <ComboBoxItem Content="it (Italian)"/>
+                <ComboBoxItem Content="ja (Japanese)"/>
+                <ComboBoxItem Content="ko (Korean)"/>
+                <ComboBoxItem Content="nb (Norwegian)"/>
+                <ComboBoxItem Content="pl (Polish)"/>
+                <ComboBoxItem Content="pt (Portuguese,"/>
+                <ComboBoxItem Content="ru (Russian)"/>
+                <ComboBoxItem Content="es (Spanish)"/>
+                <ComboBoxItem Content="sv (Swedish)"/>
+                <ComboBoxItem Content="tr (Turkish)"/>
+                <ComboBoxItem Content="ar (Arabic)"/>
+                <ComboBoxItem Content="ro (Romanian)"/>
+                <ComboBoxItem Content="sr-Cyrl (SerbianCyrillic)"/>
+                <ComboBoxItem Content="sr-Latn (SerbianLatin)"/>
+                <ComboBoxItem Content="sk (Slovak)"/>
             </ComboBox>
 
             <TextBlock Margin="5,10,5,0"  Text="EndPoint Details" FontSize="14" />
