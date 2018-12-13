@@ -93,7 +93,6 @@ namespace OCRVisualizer
 
             canvas.Visibility = Visibility.Visible;
             txtOcrOutput.Text = ExtractTextByRegions(ocrVision);
-
         }
 
         private void CreateRectangle(string boundingBox, Brush color)

@@ -16,10 +16,10 @@
             </Canvas>
         </ScrollViewer>
         <StackPanel x:Name="stckSettings" Margin="0,20,5.286,0" HorizontalAlignment="Right" VerticalAlignment="Top" Height="321" Width="261" Background="#FFF1F1F1" Visibility="Collapsed">
-            <TextBlock Margin="5,10,5,0" Text="* Settings section is not implemented yet" />
+            <TextBlock Margin="5,10,5,0" Text="* Handwriting is not implemented yet" />
 
             <TextBlock Text="Settings" FontSize="20" Margin="5,0" />
-            <CheckBox Content="Enable handwriting?" Margin="5,10,5,0" IsEnabled="False" />
+            <CheckBox Content="Enable handwriting?*" Margin="5,10,5,0" IsEnabled="False" />
             <TextBlock Margin="5,5,5,0" Text="Document Language:" />
             <ComboBox x:Name="comboLanguage" SelectedIndex="-1" Margin="5,0" SelectionChanged="ComboLanguage_SelectionChanged" >
                 <ComboBoxItem Content="unk (AutoDetect)"/>
