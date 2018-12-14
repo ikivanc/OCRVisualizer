@@ -14,7 +14,7 @@ If you would like to test OCR visualizer on your local, download Setup File and 
 
 * [Download OCRVisualizer Executable File on Windows](Setup/Release_Setup.zip) 
 
-![](screenshots/setup.png)
+![](screenshots/setup.png) 
 
 
 ## Build the project
@@ -32,6 +32,7 @@ Microsoft Cognitive Services Computer Vision Endpoint details.
   <appSettings>
     <add key="subscriptionKey" value="YOUR_COMPUTER_VISION_API_KEY" />
     <add key="endpointRegion" value="https://northeurope.api.cognitive.microsoft.com/vision/v2.0/ocr" />
+    <add key="documentLanguage" value="unk" />
   </appSettings>
 </configuration>
 ```
@@ -49,5 +50,34 @@ OCR from full page documents
 
 
 For more information about Optical character recognition (OCR) in images | [Demo](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision/#text) | [Container Support](https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/computer-vision-how-to-install-containers)
+
+## OCR Supported languages:
+* unk (AutoDetect)
+* zh-Hans (ChineseSimplified)
+* zh-Hant (ChineseTraditional)
+* cs (Czech)
+* da (Danish)
+* nl (Dutch)
+* en (English)
+* fi (Finnish)
+* fr (French)
+* de (German)
+* el (Greek)
+* hu (Hungarian)
+* it (Italian)
+* ja (Japanese)
+* ko (Korean)
+* nb (Norwegian)
+* pl (Polish)
+* pt (Portuguese,
+* ru (Russian)
+* es (Spanish)
+* sv (Swedish)
+* tr (Turkish)
+* ar (Arabic)
+* ro (Romanian)
+* sr-Cyrl (SerbianCyrillic)
+* sr-Latn (SerbianLatin)
+* sk (Slovak)
 
 Thanks.
