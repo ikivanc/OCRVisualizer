@@ -1,6 +1,7 @@
 ﻿using Model.OCRVision;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OCRVisualizer.Model;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -40,7 +41,9 @@ namespace OCRVisualizer
         private string subscriptionKey = ConfigurationManager.AppSettings["subscriptionKey"].ToString();
         private string uriEndpoint = ConfigurationManager.AppSettings["endpointRegion"].ToString();
         private string docLanguage = ConfigurationManager.AppSettings["documentLanguage"].ToString();
+        private string searchKeys = ConfigurationManager.AppSettings["searchValues"].ToString();
         private double DPIrenderSize;
+        private List<TextValue> textvalues = new List<TextValue>();
 
         public MainWindow()
         {
@@ -81,18 +84,66 @@ namespace OCRVisualizer
                     //string line = string.Join(" ", from Word sword in sline.Words
                     //                               select (string)sword.Text);
 
-
                     foreach (Word sword in sline.Words)
                     {
                         // Draw rectangles for the words
                         CreateRectangle(sword.BoundingBox, _wordColor);
                         CreateImageLabels(sword.BoundingBox, sword.Text);
+
                     }
                 }
             }
 
             canvas.Visibility = Visibility.Visible;
             txtOcrOutput.Text = ExtractTextByRegions(ocrVision);
+
+            //Search key-value pairs if Keys are defined in Settings.
+            if (!string.IsNullOrEmpty(searchKeys))
+            { 
+                ExtractKeyValuePairs(ocrVision.Regions);
+            }
+        }
+
+        // Extract Key-Value Pairs
+        private void ExtractKeyValuePairs(Region[] regions)
+        {
+            // Extract regions of text words
+            foreach (Region ereg in regions)
+            {
+                foreach (WLine sline in ereg.Lines)
+                {
+                    foreach (Word sword in sline.Words)
+                    {
+                        int[] wvalues = Array.ConvertAll(sword.BoundingBox.Split(','), int.Parse);
+                        int wwidth = (int)(wvalues[2]);
+                        int wheight = (int)(wvalues[3] );
+                        int wleft = (int)(wvalues[0]);
+                        int wtop = (int)(wvalues[1]);
+                        textvalues.Add(new TextValue { BoundingBox = sword.BoundingBox, Text=sword.Text, X = wleft, Y = wtop, Height = wheight, Width = wwidth });
+                    }
+                }
+            }
+
+            // Search Key-Value Pairs inside the documents
+            if (!string.IsNullOrEmpty(searchKeys))
+            {
+                var ocrsearchkeys = searchKeys.Split(',');
+                foreach (string key in ocrsearchkeys)
+                {
+                    List<TextValue> resultkeys = textvalues.Where(a => a.Text.Contains(key)).ToList<TextValue>();
+
+                    foreach (TextValue tv in resultkeys)
+                    {
+                        // For width 300px right is assigned
+                        // For height It's looking for 10px above
+                        string txtreply = string.Join(" ", 
+                                                    from a in textvalues
+                                                    where (a.X > tv.X) && (a.X < tv.X + tv.Width + 300) && (a.Y > tv.Y - 10) && (a.Y < tv.Y + tv.Height)
+                                                    select (string)a.Text);
+                        MessageBox.Show(tv.Text + " - " + txtreply);                 
+                    }                    
+                }
+            }
         }
 
         private void CreateRectangle(string boundingBox, Brush color)
@@ -288,7 +339,10 @@ namespace OCRVisualizer
             imgInvoice.Stretch = Stretch.Fill;
             imgInvoice.Source = bitmapSource;
 
+            //Clear previous queries if exists.
             canvas.Children.Clear();
+            textvalues.Clear();
+
             OCRResponse = await MakeOCRRequest(filePath);
             ExtractTextAndRegionsFromResponse();
 
@@ -328,6 +382,7 @@ namespace OCRVisualizer
             {
                 txtSubscriptionKey.Text = subscriptionKey;
                 txtEndPoint.Text = uriEndpoint;
+                txtKeys.Text = searchKeys;
                 comboLanguage.SelectedItem = docLanguage;
                 stckSettings.Visibility = Visibility.Visible;
             }
@@ -338,7 +393,7 @@ namespace OCRVisualizer
             subscriptionKey = txtSubscriptionKey.Text;
             uriEndpoint = txtEndPoint.Text;
             docLanguage = (comboLanguage.SelectedValue as ComboBoxItem).Content as string;
-
+            searchKeys = txtKeys.Text;
             UpdateConnectionKeys(subscriptionKey, uriEndpoint, docLanguage);
         }
 
@@ -353,6 +408,7 @@ namespace OCRVisualizer
                 if (childNode.Attributes["key"].Value == "subscriptionKey") childNode.Attributes["value"].Value = subscriptionValue;
                 else if (childNode.Attributes["key"].Value == "endpointRegion") childNode.Attributes["value"].Value = endpointValue;
                 else if (childNode.Attributes["key"].Value == "documentLanguage") childNode.Attributes["value"].Value = languageValue;
+                else if (childNode.Attributes["key"].Value == "searchValues") childNode.Attributes["value"].Value = languageValue;
             }
             appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
             appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
@@ -367,6 +423,7 @@ namespace OCRVisualizer
             {
                 docLanguage = "unk";
             }
+
         }
     }
 }

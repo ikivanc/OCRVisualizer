@@ -8,6 +8,7 @@ In this version;
 * You can see Bonding boxes of Regions, Lines and Words
 * You can see extracted text over your original document
 * You can extract full text as output
+* You extract Key-Value Pairs
 
 ## Run Executable File
 If you would like to test OCR visualizer on your local, download Setup File and update with your `subscription Key` and `endpoint` in `OCR Settings`. After defining your endpoint you can visualize your OCR documents via `Browse`.
@@ -33,11 +34,20 @@ Microsoft Cognitive Services Computer Vision Endpoint details.
     <add key="subscriptionKey" value="YOUR_COMPUTER_VISION_API_KEY" />
     <add key="endpointRegion" value="https://northeurope.api.cognitive.microsoft.com/vision/v2.0/ocr" />
     <add key="documentLanguage" value="unk" />
+    <add key="searchValues" value="Number,Field,Source" />
   </appSettings>
 </configuration>
 ```
 
+Now you can define your `Field Names` under Key-Value pairs in settings and values of these fields will be detected by their positions on the document and it'll pop-up the values.
+
+![](screenshots/ExtractKeyValueSettings.png)
+
 Here are some examples of of output of documents.
+
+Extract Key-Value Pairs
+
+![](screenshots/ExtractKeyValue.png)
 
 OCR for unstuctured documents.
 ![](screenshots/ocroutput2.png)
@@ -50,6 +60,7 @@ OCR from full page documents
 
 
 For more information about Optical character recognition (OCR) in images | [Demo](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision/#text) | [Container Support](https://docs.microsoft.com/en-us/azure/cognitive-services/computer-vision/computer-vision-how-to-install-containers)
+
 
 ## OCR Supported languages:
 * unk (AutoDetect)
