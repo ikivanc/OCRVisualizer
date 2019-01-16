@@ -51,10 +51,6 @@
                 <ComboBoxItem Content="sk (Slovak)"/>
             </ComboBox>
 
-            <TextBlock Margin="5,10,5,0"  Text="Key-Value Pairs" FontSize="14" />
-            <TextBlock Margin="5,5,5,0" Text="Enter your Keys (use comma for multiple keys):" />
-            <TextBox x:Name="txtKeys" Margin="5,0" />
-
             <TextBlock Margin="5,10,5,0"  Text="EndPoint Details" FontSize="14" />
             <TextBlock Margin="5,5,5,0" Text="Endpoint Region:" />
             <TextBox x:Name="txtEndPoint" Margin="5,0" />
@@ -63,10 +59,25 @@
             <Button Margin="5,5,5,0" Content="Update" Click="ButtonSettingsUpdate_Click"/>
 
         </StackPanel>
-        <StackPanel x:Name="stckOutput" Orientation="Vertical" VerticalAlignment="Bottom" Height="60" Margin="5,0,5,5">
+        <StackPanel x:Name="stckOutput" Orientation="Vertical" VerticalAlignment="Bottom" Height="60" Visibility="Collapsed" Margin="5,0,5,5">
             <TextBlock Text="Output:"/>
             <TextBox x:Name="txtOcrOutput" Height="41" TextWrapping="Wrap" Margin="0,0,0,2" />
         </StackPanel>
+        <Grid x:Name="gridKeyVal" Margin="0"  ClipToBounds="True" Visibility="Collapsed">
+            <Rectangle Fill="#B2A6A6A6" Margin="0" MouseLeftButtonDown="MouseLeftButtonKeyValue_Down"/>
+            <StackPanel Margin="0,0,0,-1" Orientation="Vertical" Background="#FFF1F1F1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Visible">
+
+                <TextBlock Margin="20,20,20,5"   Text="Key-Value Pairs" FontSize="14" />
+                <TextBlock Text="Enter your Fields (use comma for multiple keys):" Margin="20,0,20,5" />
+                <TextBox x:Name="txtKeys" Margin="20,0,20,5" />
+                <Button Margin="0,5,0,20" Content="Update" Click="ButtonKeyValueUpdate_Click" Width="251.143"/>
+                <StackPanel x:Name="stckKeyValResult" Margin="0,5,0,20" Orientation="Vertical" Width="254" Visibility="Collapsed">
+                    <TextBlock Margin="0,0,-0.286,0" Text="Results" FontSize="14" />
+                    <ListBox x:Name="listBoxKeyValue" Height="150"/>
+                </StackPanel>
+
+            </StackPanel>
+        </Grid>
         <Menu VerticalAlignment="Top" Margin="0,0,0.286,0">
             <MenuItem Header="Browse">
                 <MenuItem Header="Browse Image" Click="ButtonBrowse_Click" />
@@ -74,6 +85,9 @@
             <MenuItem Header="OCR Text">
                 <MenuItem Header="Visible/Disable" Click="ButtonVisiblity_Click"/>
                 <MenuItem Header="Output Visible/Disable" Click="ButtonVisiblityOutPut_Click"/>
+            </MenuItem>
+            <MenuItem Header="Field Extraction">
+                <MenuItem Header="Manage Key-Value" Click="ButtonKeyValue_Click" />
             </MenuItem>
             <MenuItem Header="Settings" >
                 <MenuItem Header="OCR Settings" Click="ButtonSettings_Click" />

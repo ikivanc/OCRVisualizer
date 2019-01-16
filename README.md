@@ -5,7 +5,8 @@ This tool will be helful for your data discovery, if you use OCR with your docum
 
 ## Main Functinality
 In this version;
-* You can see Bonding boxes of Regions, Lines and Words
+
+* You can see bounding boxes of `Regions`, `Lines` and `Words`
 * You can see extracted text over your original document
 * You can extract full text as output
 * You extract Key-Value Pairs
@@ -39,7 +40,7 @@ Microsoft Cognitive Services Computer Vision Endpoint details.
 </configuration>
 ```
 
-Now you can define your `Field Names` under Key-Value pairs in settings and values of these fields will be detected by their positions on the document and it'll pop-up the values.
+Now you can define your `Field Extraction` under Key-Value pairs in `Manage Key-Value` under `Field Extraction` menu and values of these fields will be detected by their positions on the document and detected values will be listed in same panel.
 
 ![](screenshots/ExtractKeyValueSettings.png)
 

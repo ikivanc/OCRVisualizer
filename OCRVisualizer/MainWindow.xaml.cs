@@ -59,6 +59,9 @@ namespace OCRVisualizer
                 var comboBoxItem = comboLanguage.Items.OfType<ComboBoxItem>().FirstOrDefault(x => x.Content.ToString().Contains(docLanguage));
                 comboLanguage.SelectedIndex = comboLanguage.Items.IndexOf(comboBoxItem);
             }
+
+            // Set values of Key-Value field data
+            txtKeys.Text = searchKeys;
         }
 
         // Extract Text & Text Regions 
@@ -95,6 +98,7 @@ namespace OCRVisualizer
             }
 
             canvas.Visibility = Visibility.Visible;
+            stckOutput.Visibility = Visibility.Visible;
             txtOcrOutput.Text = ExtractTextByRegions(ocrVision);
 
             //Search key-value pairs if Keys are defined in Settings.
@@ -119,7 +123,7 @@ namespace OCRVisualizer
                         int wheight = (int)(wvalues[3] );
                         int wleft = (int)(wvalues[0]);
                         int wtop = (int)(wvalues[1]);
-                        textvalues.Add(new TextValue { BoundingBox = sword.BoundingBox, Text=sword.Text, X = wleft, Y = wtop, Height = wheight, Width = wwidth });
+                        textvalues.Add(new TextValue { BoundingBox = sword.BoundingBox, Text=sword.Text, Left = wleft, Top = wtop, Height = wheight, Width = wwidth });
                     }
                 }
             }
@@ -138,10 +142,18 @@ namespace OCRVisualizer
                         // For height It's looking for 10px above
                         string txtreply = string.Join(" ", 
                                                     from a in textvalues
-                                                    where (a.X > tv.X) && (a.X < tv.X + tv.Width + 300) && (a.Y > tv.Y - 10) && (a.Y < tv.Y + tv.Height)
+                                                    where (a.Left > tv.Left) && (a.Left < tv.Left + tv.Width + 300) && (a.Top > tv.Top - 10) && (a.Top < tv.Top + tv.Height)
                                                     select (string)a.Text);
-                        MessageBox.Show(tv.Text + " - " + txtreply);                 
+                        //MessageBox.Show(tv.Text + " - " + txtreply);
+                        listBoxKeyValue.Items.Add(tv.Text + " - " + txtreply);
                     }                    
+                }
+
+                // Hide key-value extraction if there's no match
+                if (listBoxKeyValue.Items.Count > 0)
+                {
+                    stckKeyValResult.Visibility = Visibility.Visible;
+                    gridKeyVal.Visibility = Visibility.Visible;
                 }
             }
         }
@@ -261,7 +273,7 @@ namespace OCRVisualizer
                 // The detectOrientation parameter is set to true, so the method detects and
                 // and corrects text orientation before detecting text.
 
-                string requestParameters = String.Format("language={0}&detectOrientation=true",docLanguage);
+                string requestParameters = String.Format("language={0}&detectOrientation=true",docLanguage.Split()[0]);
 
                 // Assemble the URI for the REST API method.
                 string uri = uriEndpoint + "?" + requestParameters;
@@ -308,7 +320,42 @@ namespace OCRVisualizer
                 return binaryReader.ReadBytes((int)fileStream.Length);
             }
         }
-    
+
+        // Update Setting Panel paramaters
+        public void UpdateConnectionKeys(string subscriptionValue, string endpointValue, string languageValue)
+        {
+            XmlDocument appconfigFile = new XmlDocument();
+            appconfigFile.Load(AppDomain.CurrentDomain.BaseDirectory + "App.config");
+            XmlNode appSettingsNode = appconfigFile.SelectSingleNode("configuration/appSettings");
+
+            foreach (XmlNode childNode in appSettingsNode)
+            {
+                if (childNode.Attributes["key"].Value == "subscriptionKey") childNode.Attributes["value"].Value = subscriptionValue;
+                else if (childNode.Attributes["key"].Value == "endpointRegion") childNode.Attributes["value"].Value = endpointValue;
+                else if (childNode.Attributes["key"].Value == "documentLanguage") childNode.Attributes["value"].Value = languageValue;
+            }
+            appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
+            appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
+            MessageBox.Show("Fields are updated!");
+        }
+
+        // Update Key-Value Field Extraction parameters
+        public void UpdateKeyValue(string searchKeyValue)
+        {
+            XmlDocument appconfigFile = new XmlDocument();
+            appconfigFile.Load(AppDomain.CurrentDomain.BaseDirectory + "App.config");
+            XmlNode appSettingsNode = appconfigFile.SelectSingleNode("configuration/appSettings");
+
+            foreach (XmlNode childNode in appSettingsNode)
+            {
+                if (childNode.Attributes["key"].Value == "searchValues") childNode.Attributes["value"].Value = searchKeyValue;
+            }
+            appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
+            appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
+            MessageBox.Show("Field keys are updated!");
+        }
+
+
         private async void ButtonBrowse_Click(object sender, RoutedEventArgs e)
         {
             var openDlg = new Microsoft.Win32.OpenFileDialog();
@@ -342,6 +389,9 @@ namespace OCRVisualizer
             //Clear previous queries if exists.
             canvas.Children.Clear();
             textvalues.Clear();
+            gridKeyVal.Visibility = Visibility.Collapsed;
+            stckKeyValResult.Visibility = Visibility.Collapsed;
+            listBoxKeyValue.Items.Clear();
 
             OCRResponse = await MakeOCRRequest(filePath);
             ExtractTextAndRegionsFromResponse();
@@ -393,26 +443,7 @@ namespace OCRVisualizer
             subscriptionKey = txtSubscriptionKey.Text;
             uriEndpoint = txtEndPoint.Text;
             docLanguage = (comboLanguage.SelectedValue as ComboBoxItem).Content as string;
-            searchKeys = txtKeys.Text;
             UpdateConnectionKeys(subscriptionKey, uriEndpoint, docLanguage);
-        }
-
-        public void UpdateConnectionKeys(string subscriptionValue, string endpointValue, string languageValue)
-        {
-            XmlDocument appconfigFile = new XmlDocument();
-            appconfigFile.Load(AppDomain.CurrentDomain.BaseDirectory + "App.config");
-            XmlNode appSettingsNode = appconfigFile.SelectSingleNode("configuration/appSettings");
-
-            foreach (XmlNode childNode in appSettingsNode)
-            {
-                if (childNode.Attributes["key"].Value == "subscriptionKey") childNode.Attributes["value"].Value = subscriptionValue;
-                else if (childNode.Attributes["key"].Value == "endpointRegion") childNode.Attributes["value"].Value = endpointValue;
-                else if (childNode.Attributes["key"].Value == "documentLanguage") childNode.Attributes["value"].Value = languageValue;
-                else if (childNode.Attributes["key"].Value == "searchValues") childNode.Attributes["value"].Value = languageValue;
-            }
-            appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
-            appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
-            MessageBox.Show("Fields are updated!");
         }
 
         private void ComboLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -425,5 +456,31 @@ namespace OCRVisualizer
             }
 
         }
+
+        private void ButtonKeyValue_Click(object sender, RoutedEventArgs e)
+        {
+            if (gridKeyVal.Visibility == Visibility.Visible)
+            {
+                gridKeyVal.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                txtKeys.Text = searchKeys;
+                gridKeyVal.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ButtonKeyValueUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            searchKeys = txtKeys.Text;
+            UpdateKeyValue(searchKeys);
+            gridKeyVal.Visibility = Visibility.Collapsed;
+        }
+
+        private void MouseLeftButtonKeyValue_Down(object sender, MouseButtonEventArgs e)
+        {
+            gridKeyVal.Visibility = Visibility.Collapsed;
+        }
+    
     }
 }

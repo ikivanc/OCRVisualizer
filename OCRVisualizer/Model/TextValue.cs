@@ -9,8 +9,8 @@ namespace OCRVisualizer.Model
     class TextValue
     {
         public string BoundingBox { get; set; }
-        public int X;
-        public int Y;
+        public int Left;
+        public int Top;
         public int Width;
         public int Height;
         public string Text { get; set; }
