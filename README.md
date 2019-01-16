@@ -40,7 +40,14 @@ Microsoft Cognitive Services Computer Vision Endpoint details.
 </configuration>
 ```
 
+## Field Extraction - Key-Value Pairs
+
+If you're looking for a specific value of a field, you can use this feature. After defining your field names, it'll look for a certain pixel to retrieve group of text as a value. Here is how it works.
+
+![](screenshots/FieldExtraction.png)
+
 Now you can define your `Field Extraction` under Key-Value pairs in `Manage Key-Value` under `Field Extraction` menu and values of these fields will be detected by their positions on the document and detected values will be listed in same panel.
+
 
 ![](screenshots/ExtractKeyValueSettings.png)
 
