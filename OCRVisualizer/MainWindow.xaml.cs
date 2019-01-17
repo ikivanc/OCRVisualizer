@@ -187,7 +187,7 @@ namespace OCRVisualizer
                 Width = width,
                 Height = height,
                 Stroke = color,
-                StrokeThickness = 2,
+                StrokeThickness = 1,
             };
             if (highlight)
             {
@@ -479,9 +479,9 @@ namespace OCRVisualizer
 
         private void ButtonSettings_Click(object sender, RoutedEventArgs e)
         {
-            if (stckSettings.Visibility == Visibility.Visible)
+            if (gridSettings.Visibility == Visibility.Visible)
             {
-                stckSettings.Visibility = Visibility.Collapsed;
+                gridSettings.Visibility = Visibility.Collapsed;
             }
             else
             {
@@ -489,7 +489,7 @@ namespace OCRVisualizer
                 txtEndPoint.Text = uriEndpoint;
                 txtKeys.Text = searchKeys;
                 comboLanguage.SelectedItem = docLanguage;
-                stckSettings.Visibility = Visibility.Visible;
+                gridSettings.Visibility = Visibility.Visible;
             }
         }
 
@@ -534,8 +534,10 @@ namespace OCRVisualizer
 
         private void MouseLeftButtonKeyValue_Down(object sender, MouseButtonEventArgs e)
         {
-            gridKeyVal.Visibility = Visibility.Collapsed;
+            if(((System.Windows.FrameworkElement)sender).Name == "recKeyVal")
+                gridKeyVal.Visibility = Visibility.Collapsed;
+            else
+                gridSettings.Visibility = Visibility.Collapsed;
         }
-    
     }
 }

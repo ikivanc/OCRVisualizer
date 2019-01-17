@@ -18,56 +18,59 @@
                 <Canvas x:Name="canvasText"/>
             </Canvas>
         </ScrollViewer>
-        <StackPanel x:Name="stckSettings" Margin="0,20,5,0" HorizontalAlignment="Right" VerticalAlignment="Top" Height="336" Width="261" Background="#FFF1F1F1" Visibility="Hidden">
-            <TextBlock Margin="5,10,5,0" Text="* Handwriting is not implemented yet" />
-
-            <TextBlock Text="Settings" FontSize="20" Margin="5,0" />
-            <CheckBox Content="Enable handwriting?*" Margin="5,10,5,0" IsEnabled="False" />
-            <TextBlock Margin="5,5,5,0" Text="Document Language:" />
-            <ComboBox x:Name="comboLanguage" SelectedIndex="-1" Margin="5,0" SelectionChanged="ComboLanguage_SelectionChanged" >
-                <ComboBoxItem Content="unk (AutoDetect)"/>
-                <ComboBoxItem Content="zh-Hans (ChineseSimplified)"/>
-                <ComboBoxItem Content="zh-Hant (ChineseTraditional)"/>
-                <ComboBoxItem Content="cs (Czech)"/>
-                <ComboBoxItem Content="da (Danish)"/>
-                <ComboBoxItem Content="nl (Dutch)"/>
-                <ComboBoxItem Content="en (English)"/>
-                <ComboBoxItem Content="fi (Finnish)"/>
-                <ComboBoxItem Content="fr (French)"/>
-                <ComboBoxItem Content="de (German)"/>
-                <ComboBoxItem Content="el (Greek)"/>
-                <ComboBoxItem Content="hu (Hungarian)"/>
-                <ComboBoxItem Content="it (Italian)"/>
-                <ComboBoxItem Content="ja (Japanese)"/>
-                <ComboBoxItem Content="ko (Korean)"/>
-                <ComboBoxItem Content="nb (Norwegian)"/>
-                <ComboBoxItem Content="pl (Polish)"/>
-                <ComboBoxItem Content="pt (Portuguese,"/>
-                <ComboBoxItem Content="ru (Russian)"/>
-                <ComboBoxItem Content="es (Spanish)"/>
-                <ComboBoxItem Content="sv (Swedish)"/>
-                <ComboBoxItem Content="tr (Turkish)"/>
-                <ComboBoxItem Content="ar (Arabic)"/>
-                <ComboBoxItem Content="ro (Romanian)"/>
-                <ComboBoxItem Content="sr-Cyrl (SerbianCyrillic)"/>
-                <ComboBoxItem Content="sr-Latn (SerbianLatin)"/>
-                <ComboBoxItem Content="sk (Slovak)"/>
-            </ComboBox>
-
-            <TextBlock Margin="5,10,5,0"  Text="EndPoint Details" FontSize="14" />
-            <TextBlock Margin="5,5,5,0" Text="Endpoint Region:" />
-            <TextBox x:Name="txtEndPoint" Margin="5,0" />
-            <TextBlock Margin="5,5,5,0" Text="Subscription Key:" />
-            <TextBox x:Name="txtSubscriptionKey" Margin="5,0" />
-            <Button Margin="5,5,5,0" Content="Update" Click="ButtonSettingsUpdate_Click"/>
-
-        </StackPanel>
         <StackPanel x:Name="stckOutput" Orientation="Vertical" VerticalAlignment="Bottom" Height="60" Visibility="Collapsed" Margin="5,0,5,5">
             <TextBlock Text="Output:"/>
             <TextBox x:Name="txtOcrOutput" Height="41" TextWrapping="Wrap" Margin="0,0,0,2" />
         </StackPanel>
+        <Grid x:Name="gridSettings" Margin="0" Visibility="Collapsed">
+            <Rectangle x:Name="recSettings" Fill="#B2A6A6A6" Margin="0" MouseLeftButtonDown="MouseLeftButtonKeyValue_Down"/>
+            <StackPanel x:Name="stckSettings" HorizontalAlignment="Center" VerticalAlignment="Center" Width="261" Background="#FFF1F1F1">
+                <TextBlock Margin="20,10,20,0" Text="* Handwriting is not implemented yet" />
+
+                <TextBlock Text="Settings" FontSize="20" Margin="20,0" />
+                <CheckBox Content="Enable handwriting?*" Margin="20,10,20,0" IsEnabled="False" />
+                <TextBlock Margin="20,5,20,0" Text="Document Language:" />
+                <ComboBox x:Name="comboLanguage" SelectedIndex="-1" Margin="20,0" SelectionChanged="ComboLanguage_SelectionChanged" >
+                    <ComboBoxItem Content="unk (AutoDetect)"/>
+                    <ComboBoxItem Content="zh-Hans (ChineseSimplified)"/>
+                    <ComboBoxItem Content="zh-Hant (ChineseTraditional)"/>
+                    <ComboBoxItem Content="cs (Czech)"/>
+                    <ComboBoxItem Content="da (Danish)"/>
+                    <ComboBoxItem Content="nl (Dutch)"/>
+                    <ComboBoxItem Content="en (English)"/>
+                    <ComboBoxItem Content="fi (Finnish)"/>
+                    <ComboBoxItem Content="fr (French)"/>
+                    <ComboBoxItem Content="de (German)"/>
+                    <ComboBoxItem Content="el (Greek)"/>
+                    <ComboBoxItem Content="hu (Hungarian)"/>
+                    <ComboBoxItem Content="it (Italian)"/>
+                    <ComboBoxItem Content="ja (Japanese)"/>
+                    <ComboBoxItem Content="ko (Korean)"/>
+                    <ComboBoxItem Content="nb (Norwegian)"/>
+                    <ComboBoxItem Content="pl (Polish)"/>
+                    <ComboBoxItem Content="pt (Portuguese,"/>
+                    <ComboBoxItem Content="ru (Russian)"/>
+                    <ComboBoxItem Content="es (Spanish)"/>
+                    <ComboBoxItem Content="sv (Swedish)"/>
+                    <ComboBoxItem Content="tr (Turkish)"/>
+                    <ComboBoxItem Content="ar (Arabic)"/>
+                    <ComboBoxItem Content="ro (Romanian)"/>
+                    <ComboBoxItem Content="sr-Cyrl (SerbianCyrillic)"/>
+                    <ComboBoxItem Content="sr-Latn (SerbianLatin)"/>
+                    <ComboBoxItem Content="sk (Slovak)"/>
+                </ComboBox>
+
+                <TextBlock Margin="20,10,20,0"  Text="EndPoint Details" FontSize="14" />
+                <TextBlock Margin="20,5,20,0" Text="Endpoint Region:" />
+                <TextBox x:Name="txtEndPoint" Margin="20,0" />
+                <TextBlock Margin="20,5,20,0" Text="Subscription Key:" />
+                <TextBox x:Name="txtSubscriptionKey" Margin="20,0" />
+                <Button Margin="20,10,20,20" Content="Update" Click="ButtonSettingsUpdate_Click"/>
+
+            </StackPanel>
+        </Grid>
         <Grid x:Name="gridKeyVal" Margin="0"  ClipToBounds="True" Visibility="Collapsed">
-            <Rectangle Fill="#B2A6A6A6" Margin="0" MouseLeftButtonDown="MouseLeftButtonKeyValue_Down"/>
+            <Rectangle x:Name="recKeyVal" Fill="#B2A6A6A6" Margin="0" MouseLeftButtonDown="MouseLeftButtonKeyValue_Down"/>
             <StackPanel Margin="0,0,0,-1" Orientation="Vertical" Background="#FFF1F1F1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Visible">
 
                 <TextBlock Margin="20,20,20,5"   Text="Key-Value Pairs" FontSize="14" />
@@ -75,7 +78,7 @@
                 <TextBox x:Name="txtKeys" Margin="20,0,20,5" />
                 <TextBlock Text="Enter your distance width to retrieve words in doc" Margin="20,0,20,5" />
                 <TextBox x:Name="txtKeysWidth" Margin="20,0,20,5" />
-                <Button Margin="0,5,0,20" Content="Update" Click="ButtonKeyValueUpdate_Click" Width="251.143"/>
+                <Button Margin="0,5,0,20" Content="Update" Click="ButtonKeyValueUpdate_Click" Width="250"/>
                 <StackPanel x:Name="stckKeyValResult" Margin="0,5,0,20" Orientation="Vertical" Width="254" Visibility="Collapsed">
                     <TextBlock Margin="0,0,-0.286,0" Text="Results" FontSize="14" />
                     <ListBox x:Name="listBoxKeyValue" Height="150"/>
