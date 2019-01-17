@@ -42,8 +42,11 @@ namespace OCRVisualizer
         private string uriEndpoint = ConfigurationManager.AppSettings["endpointRegion"].ToString();
         private string docLanguage = ConfigurationManager.AppSettings["documentLanguage"].ToString();
         private string searchKeys = ConfigurationManager.AppSettings["searchValues"].ToString();
+        private int searchKeysWidth = Convert.ToInt32(ConfigurationManager.AppSettings["searchValuesWidth"].ToString());
+
         private double DPIrenderSize;
         private List<TextValue> textvalues = new List<TextValue>();
+        private bool regionVis = true, lineVis = true, wordVis = true, textVis = true;
 
         public MainWindow()
         {
@@ -62,6 +65,7 @@ namespace OCRVisualizer
 
             // Set values of Key-Value field data
             txtKeys.Text = searchKeys;
+            txtKeysWidth.Text = searchKeysWidth.ToString();
         }
 
         // Extract Text & Text Regions 
@@ -77,12 +81,12 @@ namespace OCRVisualizer
             foreach (Region ereg in ocrVision.Regions)
             {
                 // Draw rectangles for the regions
-                CreateRectangle(ereg.BoundingBox, _regionColor);
+                CreateRectangle("region",ereg.BoundingBox, _regionColor);
 
                 foreach (WLine sline in ereg.Lines)
                 {
                     // Draw rectangles for the lines
-                    CreateRectangle(sline.BoundingBox, _lineColor);
+                    CreateRectangle("line",sline.BoundingBox, _lineColor);
 
                     //string line = string.Join(" ", from Word sword in sline.Words
                     //                               select (string)sword.Text);
@@ -90,14 +94,18 @@ namespace OCRVisualizer
                     foreach (Word sword in sline.Words)
                     {
                         // Draw rectangles for the words
-                        CreateRectangle(sword.BoundingBox, _wordColor);
+                        //CreateRectangle(sword.BoundingBox, _wordColor);
                         CreateImageLabels(sword.BoundingBox, sword.Text);
 
                     }
                 }
             }
 
-            canvas.Visibility = Visibility.Visible;
+            if (regionVis) canvasRegions.Visibility = Visibility.Visible;
+            if (lineVis) canvasLines.Visibility = Visibility.Visible;
+            if (wordVis) canvasWords.Visibility = Visibility.Visible;
+            if (textVis) canvasText.Visibility = Visibility.Visible;
+
             stckOutput.Visibility = Visibility.Visible;
             txtOcrOutput.Text = ExtractTextByRegions(ocrVision);
 
@@ -138,11 +146,11 @@ namespace OCRVisualizer
 
                     foreach (TextValue tv in resultkeys)
                     {
-                        // For width 300px right is assigned
+                        // For width, searchKeysWidth is binded from App.config file, 'searchValuesWidth' and 300px is assigned for this case
                         // For height It's looking for 10px above
                         string txtreply = string.Join(" ", 
                                                     from a in textvalues
-                                                    where (a.Left > tv.Left) && (a.Left < tv.Left + tv.Width + 300) && (a.Top > tv.Top - 10) && (a.Top < tv.Top + tv.Height)
+                                                    where (a.Left > tv.Left) && (a.Left < tv.Left + tv.Width + searchKeysWidth) && (a.Top > tv.Top - 10) && (a.Top < tv.Top + tv.Height)
                                                     select (string)a.Text);
                         //MessageBox.Show(tv.Text + " - " + txtreply);
                         listBoxKeyValue.Items.Add(tv.Text + " - " + txtreply);
@@ -158,13 +166,13 @@ namespace OCRVisualizer
             }
         }
 
-        private void CreateRectangle(string boundingBox, Brush color)
+        private void CreateRectangle(string type, string boundingBox, Brush color)
         {
-            CreateRectangle(boundingBox, color, false);
+            CreateRectangle(type, boundingBox, color, false);
         }
 
         // Create Rectangle method on Images
-        private void CreateRectangle(string boundingBox, Brush color, bool highlight)
+        private void CreateRectangle(string type, string boundingBox, Brush color, bool highlight)
         {
             // Detect the edges & size values of the box
             int[] values = Array.ConvertAll(boundingBox.Split(','), int.Parse);
@@ -187,7 +195,22 @@ namespace OCRVisualizer
             }
 
             // Add  rectangle object to a canvas
-            canvas.Children.Add(rec);
+            switch (type)
+            {
+                case "line":
+                    canvasLines.Children.Add(rec);
+                    break;
+                case "region":
+                    canvasRegions.Children.Add(rec);
+                    break;
+                case "word":
+                    canvasRegions.Children.Add(rec);
+                    break;
+                default:
+                    canvasWords.Children.Add(rec);
+                    break;
+            }
+
             Canvas.SetTop(rec, top);
             Canvas.SetLeft(rec, left);
         }
@@ -220,14 +243,13 @@ namespace OCRVisualizer
                 FontSize = height + 2
             };
 
-
             // Add  rectangle object to a canvas
-            canvas.Children.Add(rec);
+            canvasWords.Children.Add(rec);
             Canvas.SetTop(rec, top);
             Canvas.SetLeft(rec, left);
 
             // Add Labels on top of rectangles
-            canvas.Children.Add(lbl);
+            canvasText.Children.Add(lbl);
             Canvas.SetTop(lbl, top-10);
             Canvas.SetLeft(lbl, left-5);
         }
@@ -340,7 +362,7 @@ namespace OCRVisualizer
         }
 
         // Update Key-Value Field Extraction parameters
-        public void UpdateKeyValue(string searchKeyValue)
+        public void UpdateKeyValue(string searchKeyValue, int searchKeyWidthValue)
         {
             XmlDocument appconfigFile = new XmlDocument();
             appconfigFile.Load(AppDomain.CurrentDomain.BaseDirectory + "App.config");
@@ -349,6 +371,8 @@ namespace OCRVisualizer
             foreach (XmlNode childNode in appSettingsNode)
             {
                 if (childNode.Attributes["key"].Value == "searchValues") childNode.Attributes["value"].Value = searchKeyValue;
+                else if (childNode.Attributes["key"].Value == "searchValuesWidth") childNode.Attributes["value"].Value = searchKeyWidthValue.ToString();
+
             }
             appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
             appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
@@ -376,9 +400,9 @@ namespace OCRVisualizer
 
             canvasImg.Height = bitmapSource.Height;
             canvasImg.Width = bitmapSource.Width;
-            
-            canvas.Height = bitmapSource.Height;
-            canvas.Width = bitmapSource.Width;
+
+            canvasText.Height = bitmapSource.Height;
+            canvasText.Width = bitmapSource.Width;
 
             // This is for calculating RenderSize on the screen
             DPIrenderSize = bitmapSource.PixelHeight / bitmapSource.Height;
@@ -387,7 +411,10 @@ namespace OCRVisualizer
             imgInvoice.Source = bitmapSource;
 
             //Clear previous queries if exists.
-            canvas.Children.Clear();
+            canvasText.Children.Clear();
+            canvasRegions.Children.Clear();
+            canvasLines.Children.Clear();
+            canvasWords.Children.Clear();
             textvalues.Clear();
             gridKeyVal.Visibility = Visibility.Collapsed;
             stckKeyValResult.Visibility = Visibility.Collapsed;
@@ -400,26 +427,54 @@ namespace OCRVisualizer
 
         private void ButtonVisiblity_Click(object sender, RoutedEventArgs e)
         {
-            if (canvas.Visibility == Visibility.Visible)
+            switch (((System.Windows.Controls.HeaderedItemsControl)sender).Header)
             {
-                canvas.Visibility = Visibility.Collapsed;
+                case "Regions":
+                    SwitchCanvasVisibility(canvasRegions);
+                    regionVis = !regionVis;
+                    break;
+                case "Lines":
+                    SwitchCanvasVisibility(canvasLines);
+                    lineVis = !lineVis;
+                    break;
+                case "Words":
+                    SwitchCanvasVisibility(canvasWords);
+                    wordVis = !wordVis;
+                    break;
+                case "Texts":
+                    SwitchCanvasVisibility(canvasText);
+                    textVis = !textVis;
+                    break;
+            }
+        }
+
+        private void SwitchCanvasVisibility(System.Windows.Controls.Canvas swcanvas)
+        {
+            if (swcanvas.Visibility == Visibility.Visible)
+            {
+                swcanvas.Visibility = Visibility.Collapsed;
             }
             else
             {
-                canvas.Visibility = Visibility.Visible;
+                swcanvas.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void SwitchStackVisibility(System.Windows.Controls.StackPanel swstack)
+        {
+            if (swstack.Visibility == Visibility.Visible)
+            {
+                swstack.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                swstack.Visibility = Visibility.Visible;
             }
         }
 
         private void ButtonVisiblityOutPut_Click(object sender, RoutedEventArgs e)
         {
-            if (stckOutput.Visibility == Visibility.Visible)
-            {
-                stckOutput.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                stckOutput.Visibility = Visibility.Visible;
-            }
+            SwitchStackVisibility(stckOutput);
         }
 
         private void ButtonSettings_Click(object sender, RoutedEventArgs e)
@@ -465,7 +520,6 @@ namespace OCRVisualizer
             }
             else
             {
-                txtKeys.Text = searchKeys;
                 gridKeyVal.Visibility = Visibility.Visible;
             }
         }
@@ -473,7 +527,8 @@ namespace OCRVisualizer
         private void ButtonKeyValueUpdate_Click(object sender, RoutedEventArgs e)
         {
             searchKeys = txtKeys.Text;
-            UpdateKeyValue(searchKeys);
+            searchKeysWidth = Convert.ToInt32(txtKeysWidth.Text);
+            UpdateKeyValue(searchKeys, searchKeysWidth);
             gridKeyVal.Visibility = Visibility.Collapsed;
         }
 

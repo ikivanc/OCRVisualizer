@@ -7,6 +7,7 @@ This tool will be helful for your data discovery, if you use OCR with your docum
 In this version;
 
 * You can see bounding boxes of `Regions`, `Lines` and `Words`
+* You can select layers of bounding boxes to visualize under `OCR Text Visibility` menu
 * You can see extracted text over your original document
 * You can extract full text as output
 * You extract Key-Value Pairs
@@ -36,6 +37,7 @@ Microsoft Cognitive Services Computer Vision Endpoint details.
     <add key="endpointRegion" value="https://northeurope.api.cognitive.microsoft.com/vision/v2.0/ocr" />
     <add key="documentLanguage" value="unk" />
     <add key="searchValues" value="Number,Field,Source" />
+    <add key="searchValuesWidth" value="300" />
   </appSettings>
 </configuration>
 ```
@@ -56,6 +58,12 @@ Here are some examples of of output of documents.
 Extract Key-Value Pairs
 
 ![](screenshots/ExtractKeyValue.png)
+
+
+## Visualize Bounding Boxes
+
+Now you can select layers of bounding boxes to visualize under `OCR Text Visibility` menu
+![](screenshots/OCRTextVisibility.png)
 
 OCR for unstuctured documents.
 ![](screenshots/ocroutput2.png)
