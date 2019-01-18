@@ -9,16 +9,12 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml;
 
@@ -29,23 +25,23 @@ namespace OCRVisualizer
     /// </summary>
     public partial class MainWindow : Window
     {
-        private string OCRResponse = String.Empty;
-
         // Brush Color assigment for Regions, Lines and Words
         private static Brush _regionColor = Brushes.Green;
         private static Brush _lineColor = Brushes.Red;
         private static Brush _wordColor = Brushes.Aqua;
         private static Brush _highlightColor = Brushes.Black;
 
-        // Microsoft Cognitive Services Computer Vision Endpoint details.
+        // Microsoft Cognitive Services Computer Vision Endpoint details & Settings saved in App.config
         private string subscriptionKey = ConfigurationManager.AppSettings["subscriptionKey"].ToString();
         private string uriEndpoint = ConfigurationManager.AppSettings["endpointRegion"].ToString();
         private string docLanguage = ConfigurationManager.AppSettings["documentLanguage"].ToString();
         private string searchKeys = ConfigurationManager.AppSettings["searchValues"].ToString();
         private int searchKeysWidth = Convert.ToInt32(ConfigurationManager.AppSettings["searchValuesWidth"].ToString());
 
-        private double DPIrenderSize;
+        // Local variables for the project
         private List<TextValue> textvalues = new List<TextValue>();
+        private string OCRResponse = String.Empty;
+        private double DPIrenderSize;
         private bool regionVis = true, lineVis = true, wordVis = true, textVis = true;
 
         public MainWindow()
@@ -72,44 +68,35 @@ namespace OCRVisualizer
         private void ExtractTextAndRegionsFromResponse()
         {
             var response = JObject.Parse(OCRResponse);
-
-            //Full extracted text if it is needed
-            //var fulltext = ExtractTextFromResponse(response);
-
             OCRVision ocrVision = JsonConvert.DeserializeObject<OCRVision>(OCRResponse);
 
             foreach (Region ereg in ocrVision.Regions)
             {
                 // Draw rectangles for the regions
                 CreateRectangle("region",ereg.BoundingBox, _regionColor);
-
                 foreach (WLine sline in ereg.Lines)
                 {
                     // Draw rectangles for the lines
                     CreateRectangle("line",sline.BoundingBox, _lineColor);
-
-                    //string line = string.Join(" ", from Word sword in sline.Words
-                    //                               select (string)sword.Text);
-
                     foreach (Word sword in sline.Words)
                     {
                         // Draw rectangles for the words
-                        //CreateRectangle(sword.BoundingBox, _wordColor);
                         CreateImageLabels(sword.BoundingBox, sword.Text);
-
                     }
                 }
             }
 
+            // Visibility check for the bounding box layers
             if (regionVis) canvasRegions.Visibility = Visibility.Visible;
             if (lineVis) canvasLines.Visibility = Visibility.Visible;
             if (wordVis) canvasWords.Visibility = Visibility.Visible;
             if (textVis) canvasText.Visibility = Visibility.Visible;
 
+            // Visibility check for text output 
             stckOutput.Visibility = Visibility.Visible;
             txtOcrOutput.Text = ExtractTextByRegions(ocrVision);
 
-            //Search key-value pairs if Keys are defined in Settings.
+            //Search key-value pairs if keys are defined in Settings.
             if (!string.IsNullOrEmpty(searchKeys))
             { 
                 ExtractKeyValuePairs(ocrVision.Regions);
@@ -268,16 +255,7 @@ namespace OCRVisualizer
 
             return resultText;
         }
-
-        // Extract full text from the response
-        private static string ExtractTextFromResponse(JObject responseJson)
-        {
-            return string.Join(" ", from r in responseJson["regions"]
-                                    from l in r["lines"]
-                                    from w in l["words"]
-                                    select (string)w["text"]);
-        }
-
+      
         // Microsoft Cognitive Services Computer Vision OCR Method
         private async Task<string> MakeOCRRequest(string imageFilePath)
         {
@@ -286,20 +264,15 @@ namespace OCRVisualizer
                 HttpClient client = new HttpClient();
 
                 // Request headers.
-                client.DefaultRequestHeaders.Add(
-                    "Ocp-Apim-Subscription-Key", subscriptionKey);
+                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
 
                 // Request parameters. 
-                // The language parameter doesn't specify a language, so the 
-                // method detects it automatically.
-                // The detectOrientation parameter is set to true, so the method detects and
-                // and corrects text orientation before detecting text.
-
+                // The language parameter doesn't specify a language, so the method detects it automatically.
+                // The detectOrientation parameter is set to true, so the method detects and corrects text orientation before detecting text.
                 string requestParameters = String.Format("language={0}&detectOrientation=true",docLanguage.Split()[0]);
 
                 // Assemble the URI for the REST API method.
                 string uri = uriEndpoint + "?" + requestParameters;
-
                 HttpResponseMessage response;
 
                 // Read the contents of the specified local image
@@ -310,10 +283,8 @@ namespace OCRVisualizer
                 using (ByteArrayContent content = new ByteArrayContent(byteData))
                 {
                     // This example uses the "application/octet-stream" content type.
-                    // The other content types you can use are "application/json"
-                    // and "multipart/form-data".
-                    content.Headers.ContentType =
-                        new MediaTypeHeaderValue("application/octet-stream");
+                    // The other content types you can use are "application/json" and "multipart/form-data".
+                    content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
                     // Asynchronously call the REST API method.
                     response = await client.PostAsync(uri, content);
@@ -321,9 +292,7 @@ namespace OCRVisualizer
 
                 // Asynchronously get the JSON response.
                 string contentString = await response.Content.ReadAsStringAsync();
-
                 return contentString;
-
             }
             catch (Exception e)
             {
@@ -334,8 +303,7 @@ namespace OCRVisualizer
         static byte[] GetImageAsByteArray(string imageFilePath)
         {
             // Open a read-only file stream for the specified file.
-            using (FileStream fileStream =
-                new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
+            using (FileStream fileStream = new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
             {
                 // Read the file's contents into a byte array.
                 BinaryReader binaryReader = new BinaryReader(fileStream);
@@ -356,6 +324,7 @@ namespace OCRVisualizer
                 else if (childNode.Attributes["key"].Value == "endpointRegion") childNode.Attributes["value"].Value = endpointValue;
                 else if (childNode.Attributes["key"].Value == "documentLanguage") childNode.Attributes["value"].Value = languageValue;
             }
+
             appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
             appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
             MessageBox.Show("Fields are updated!");
@@ -372,14 +341,14 @@ namespace OCRVisualizer
             {
                 if (childNode.Attributes["key"].Value == "searchValues") childNode.Attributes["value"].Value = searchKeyValue;
                 else if (childNode.Attributes["key"].Value == "searchValuesWidth") childNode.Attributes["value"].Value = searchKeyWidthValue.ToString();
-
             }
+
             appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
             appconfigFile.Save(AppDomain.CurrentDomain.SetupInformation.ConfigurationFile);
             MessageBox.Show("Field keys are updated!");
         }
 
-
+        // Browse an image to send to Microsoft Cognitive Services OCR endpoint
         private async void ButtonBrowse_Click(object sender, RoutedEventArgs e)
         {
             var openDlg = new Microsoft.Win32.OpenFileDialog();
@@ -425,6 +394,7 @@ namespace OCRVisualizer
 
         }
 
+        // Change Visibility of Bounding Box Layers
         private void ButtonVisiblity_Click(object sender, RoutedEventArgs e)
         {
             switch (((System.Windows.Controls.HeaderedItemsControl)sender).Header)
@@ -472,6 +442,18 @@ namespace OCRVisualizer
             }
         }
 
+        private void SwitchGridVisibility(System.Windows.Controls.Grid swgrid)
+        {
+            if (swgrid.Visibility == Visibility.Visible)
+            {
+                swgrid.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                swgrid.Visibility = Visibility.Visible;
+            }
+        }
+
         private void ButtonVisiblityOutPut_Click(object sender, RoutedEventArgs e)
         {
             SwitchStackVisibility(stckOutput);
@@ -498,6 +480,7 @@ namespace OCRVisualizer
             subscriptionKey = txtSubscriptionKey.Text;
             uriEndpoint = txtEndPoint.Text;
             docLanguage = (comboLanguage.SelectedValue as ComboBoxItem).Content as string;
+
             UpdateConnectionKeys(subscriptionKey, uriEndpoint, docLanguage);
         }
 
@@ -509,31 +492,25 @@ namespace OCRVisualizer
             {
                 docLanguage = "unk";
             }
-
         }
 
         private void ButtonKeyValue_Click(object sender, RoutedEventArgs e)
         {
-            if (gridKeyVal.Visibility == Visibility.Visible)
-            {
-                gridKeyVal.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                gridKeyVal.Visibility = Visibility.Visible;
-            }
+            SwitchGridVisibility(gridKeyVal);
         }
 
         private void ButtonKeyValueUpdate_Click(object sender, RoutedEventArgs e)
         {
             searchKeys = txtKeys.Text;
             searchKeysWidth = Convert.ToInt32(txtKeysWidth.Text);
+
             UpdateKeyValue(searchKeys, searchKeysWidth);
-            gridKeyVal.Visibility = Visibility.Collapsed;
+            SwitchGridVisibility(gridKeyVal);
         }
 
         private void MouseLeftButtonKeyValue_Down(object sender, MouseButtonEventArgs e)
         {
+            // Collapse the grid if it's clicked on the background
             if(((System.Windows.FrameworkElement)sender).Name == "recKeyVal")
                 gridKeyVal.Visibility = Visibility.Collapsed;
             else
