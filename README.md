@@ -3,6 +3,8 @@ OCRVisualizer is a tool to visualize Microsoft Cognitive Services OCR API json o
 
 This tool will be helful for your data discovery, if you use OCR with your documents.
 
+The new preview OCR engine is integrated (through "Recognize Text" API operation) with even better text recognition results for English.
+
 ## Main Functinality
 In this version;
 
@@ -11,6 +13,7 @@ In this version;
 * You can see extracted text over your original document
 * You can extract full text as output
 * You extract Key-Value Pairs
+* Better results with new preview OCR engine (through "Recognize Text", only in English)
 
 ## Run Executable File
 If you would like to test OCR visualizer on your local, download Setup File and update with your `subscription Key` and `endpoint` in `OCR Settings`. After defining your endpoint you can visualize your OCR documents via `Browse`.
