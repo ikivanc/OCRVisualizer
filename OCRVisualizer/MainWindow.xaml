@@ -28,7 +28,8 @@
                 <TextBlock Margin="20,10,20,0" Text="* Handwriting is not implemented yet" />
 
                 <TextBlock Text="Settings" FontSize="20" Margin="20,0" />
-                <CheckBox Content="Enable handwriting?*" Margin="20,10,20,0" IsEnabled="False" />
+                <CheckBox Name="checkboxIsNewOCR" Content="Enable new preview OCR engine" Margin="20,10,20,0" Click="NewOCRCheckBox_Checked" />
+                <CheckBox x:Name="checkboxTextMode" Content="Enable handwriting?*" Margin="20,10,20,0" IsEnabled="False" />
                 <TextBlock Margin="20,5,20,0" Text="Document Language:" />
                 <ComboBox x:Name="comboLanguage" SelectedIndex="-1" Margin="20,0" SelectionChanged="ComboLanguage_SelectionChanged" >
                     <ComboBoxItem Content="unk (AutoDetect)"/>

@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Model.OCRVision
+namespace OCRVisualizer.Model
 {
-    public class OCRVision
+    public class OCRText
     {
         [JsonProperty(PropertyName = "language")]
         public string Language { get; set; }

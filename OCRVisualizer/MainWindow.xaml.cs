@@ -1,5 +1,4 @@
-﻿using Model.OCRVision;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OCRVisualizer.Model;
 using System;
@@ -37,12 +36,14 @@ namespace OCRVisualizer
         private string docLanguage = ConfigurationManager.AppSettings["documentLanguage"].ToString();
         private string searchKeys = ConfigurationManager.AppSettings["searchValues"].ToString();
         private int searchKeysWidth = Convert.ToInt32(ConfigurationManager.AppSettings["searchValuesWidth"].ToString());
+        private bool isNewOCREnabled = ConfigurationManager.AppSettings["isNewOCREnabled"].ToString() == "true"? true:false;
 
         // Local variables for the project
-        private List<TextValue> textvalues = new List<TextValue>();
+        private List<WordNew> textvalues = new List<WordNew>();
         private string OCRResponse = String.Empty;
         private double DPIrenderSize;
         private bool regionVis = true, lineVis = true, wordVis = true, textVis = true;
+
 
         public MainWindow()
         {
@@ -68,9 +69,9 @@ namespace OCRVisualizer
         private void ExtractTextAndRegionsFromResponse()
         {
             var response = JObject.Parse(OCRResponse);
-            OCRVision ocrVision = JsonConvert.DeserializeObject<OCRVision>(OCRResponse);
+            OCRText ocrOutput = JsonConvert.DeserializeObject<OCRText>(OCRResponse);
 
-            foreach (Region ereg in ocrVision.Regions)
+            foreach (Region ereg in ocrOutput.Regions)
             {
                 // Draw rectangles for the regions
                 CreateRectangle("region",ereg.BoundingBox, _regionColor);
@@ -81,7 +82,7 @@ namespace OCRVisualizer
                     foreach (Word sword in sline.Words)
                     {
                         // Draw rectangles for the words
-                        CreateImageLabels(sword.BoundingBox, sword.Text);
+                        CreateImageLabelsAndRectangle(sword.BoundingBox, sword.Text);
                     }
                 }
             }
@@ -94,14 +95,56 @@ namespace OCRVisualizer
 
             // Visibility check for text output 
             stckOutput.Visibility = Visibility.Visible;
-            txtOcrOutput.Text = ExtractTextByRegions(ocrVision);
+            txtOcrOutput.Text = ExtractTextByRegions(ocrOutput);
 
             //Search key-value pairs if keys are defined in Settings.
             if (!string.IsNullOrEmpty(searchKeys))
             { 
-                ExtractKeyValuePairs(ocrVision.Regions);
+                ExtractKeyValuePairs(ocrOutput.Regions);
             }
         }
+
+        // NEW API Extract Text & Text Regions 
+        private void ExtractTextAndRegionsNewAPIFromResponse()
+        {
+                var response = JObject.Parse(OCRResponse);
+                RecognizeText ocrOutput = JsonConvert.DeserializeObject<RecognizeText>(OCRResponse);
+
+            if (ocrOutput != null && ocrOutput.RecognitionResult != null && ocrOutput.RecognitionResult.Lines != null)
+            {
+                foreach (LineNew sline in ocrOutput.RecognitionResult.Lines)
+                {
+                    // Draw rectangles for the lines
+                    CreateRectangle("line", sline.BoundingBox, _lineColor);
+                    foreach (WordNew sword in sline.Words)
+                    {
+                        // Draw rectangles for the words
+                        CreateImageLabelsAndRectangle(sword.BoundingBox, sword.Text);
+                    }
+                }
+
+
+                // Visibility check for the bounding box layers
+                if (regionVis) canvasRegions.Visibility = Visibility.Visible;
+                if (lineVis) canvasLines.Visibility = Visibility.Visible;
+                if (wordVis) canvasWords.Visibility = Visibility.Visible;
+                if (textVis) canvasText.Visibility = Visibility.Visible;
+
+                // Visibility check for text output 
+                stckOutput.Visibility = Visibility.Visible;
+
+                txtOcrOutput.Text = ExtractTextByRegions(ocrOutput);
+
+                //Search key-value pairs if keys are defined in Settings.
+                if (!string.IsNullOrEmpty(searchKeys))
+                {
+                    ExtractKeyValuePairs(ocrOutput.RecognitionResult.Lines);
+                }
+            }
+            else
+                MessageBox.Show("Output can't be extracted");
+        }
+
 
         // Extract Key-Value Pairs
         private void ExtractKeyValuePairs(Region[] regions)
@@ -114,11 +157,7 @@ namespace OCRVisualizer
                     foreach (Word sword in sline.Words)
                     {
                         int[] wvalues = Array.ConvertAll(sword.BoundingBox.Split(','), int.Parse);
-                        int wwidth = (int)(wvalues[2]);
-                        int wheight = (int)(wvalues[3] );
-                        int wleft = (int)(wvalues[0]);
-                        int wtop = (int)(wvalues[1]);
-                        textvalues.Add(new TextValue { BoundingBox = sword.BoundingBox, Text=sword.Text, Left = wleft, Top = wtop, Height = wheight, Width = wwidth });
+                        textvalues.Add(new WordNew { Text = sword.Text, BoundingBox = wvalues });
                     }
                 }
             }
@@ -129,19 +168,19 @@ namespace OCRVisualizer
                 var ocrsearchkeys = searchKeys.Split(',');
                 foreach (string key in ocrsearchkeys)
                 {
-                    List<TextValue> resultkeys = textvalues.Where(a => a.Text.Contains(key)).ToList<TextValue>();
+                    var resultkeys = textvalues.Where(a => a.Text.Contains(key));
 
-                    foreach (TextValue tv in resultkeys)
+                    foreach (var tv in resultkeys)
                     {
                         // For width, searchKeysWidth is binded from App.config file, 'searchValuesWidth' and 300px is assigned for this case
                         // For height It's looking for 10px above
-                        string txtreply = string.Join(" ", 
+                        string txtreply = string.Join(" ",
                                                     from a in textvalues
-                                                    where (a.Left > tv.Left) && (a.Left < tv.Left + tv.Width + searchKeysWidth) && (a.Top > tv.Top - 10) && (a.Top < tv.Top + tv.Height)
+                                                    where (a.BoundingBox[0] > tv.BoundingBox[0]) && (a.BoundingBox[0] < tv.BoundingBox[0] + tv.BoundingBox[2] + searchKeysWidth) && (a.BoundingBox[1] > tv.BoundingBox[1] - 10) && (a.BoundingBox[1] < tv.BoundingBox[1]+ tv.BoundingBox[3])
                                                     select (string)a.Text);
                         //MessageBox.Show(tv.Text + " - " + txtreply);
                         listBoxKeyValue.Items.Add(tv.Text + " - " + txtreply);
-                    }                    
+                    }
                 }
 
                 // Hide key-value extraction if there's no match
@@ -153,57 +192,110 @@ namespace OCRVisualizer
             }
         }
 
-        private void CreateRectangle(string type, string boundingBox, Brush color)
+        private void ExtractKeyValuePairs(LineNew[] lines)
         {
-            CreateRectangle(type, boundingBox, color, false);
+            // Search Key-Value Pairs inside the documents
+            if (!string.IsNullOrEmpty(searchKeys))
+            {
+                var ocrsearchkeys = searchKeys.Split(',');
+                foreach (string key in ocrsearchkeys)
+                {
+                    var resultkeys = lines.Where(a => a.Text.Contains(key));
+
+                    foreach (var tv in resultkeys)
+                    {
+                        // For width, searchKeysWidth is binded from App.config file, 'searchValuesWidth' and 300px is assigned for this case
+                        // For height It's looking for 10px above
+                        string txtreply = string.Join(" ",
+                                                    from a in lines
+                                                    where (a.BoundingBox[0] > tv.BoundingBox[0]) && (a.BoundingBox[0] < tv.BoundingBox[2] + searchKeysWidth) && (a.BoundingBox[1] > tv.BoundingBox[1] - 10) && (a.BoundingBox[1] < tv.BoundingBox[3])
+                                                    select (string)a.Text);
+                        //MessageBox.Show(tv.Text + " - " + txtreply);
+                        listBoxKeyValue.Items.Add(tv.Text + " - " + txtreply);
+                    }
+                }
+
+                // Hide key-value extraction if there's no match
+                if (listBoxKeyValue.Items.Count > 0)
+                {
+                    stckKeyValResult.Visibility = Visibility.Visible;
+                    gridKeyVal.Visibility = Visibility.Visible;
+                }
+            }
         }
 
-        // Create Rectangle method on Images
-        private void CreateRectangle(string type, string boundingBox, Brush color, bool highlight)
+
+        // Create Rectangle method on Images for OCR output and RecognizeText output
+        private void CreateRectangle(string type, int[] boundingBox, Brush color)
         {
-            // Detect the edges & size values of the box
+            // Detect the edges & size values of the box  for RecognizeText
+            int[] values = boundingBox;
+            int width = (int)((values[2] - values[0]) / DPIrenderSize);
+            int height = (int)((values[7] - values[1]) / DPIrenderSize);
+            int left = (int)(values[0] / DPIrenderSize);
+            int top = (int)(values[1] / DPIrenderSize);
+
+            CreateRectangle(type, left,top,width,height, color, false);
+        }
+
+        private void CreateRectangle(string type, string boundingBox, Brush color)
+        {
+            // Detect the edges & size values of the box for MS OCR
             int[] values = Array.ConvertAll(boundingBox.Split(','), int.Parse);
-            int width = (int)(values[2]/ DPIrenderSize);
+            int width = (int)(values[2] / DPIrenderSize);
             int height = (int)(values[3] / DPIrenderSize);
             int left = (int)(values[0] / DPIrenderSize);
             int top = (int)(values[1] / DPIrenderSize);
 
-            // Create the rectangle
-            Rectangle rec = new Rectangle()
-            {
-                Width = width,
-                Height = height,
-                Stroke = color,
-                StrokeThickness = 1,
-            };
-            if (highlight)
-            {
-                rec.Fill = _highlightColor;
-            }
-
-            // Add  rectangle object to a canvas
-            switch (type)
-            {
-                case "line":
-                    canvasLines.Children.Add(rec);
-                    break;
-                case "region":
-                    canvasRegions.Children.Add(rec);
-                    break;
-                case "word":
-                    canvasRegions.Children.Add(rec);
-                    break;
-                default:
-                    canvasWords.Children.Add(rec);
-                    break;
-            }
-
-            Canvas.SetTop(rec, top);
-            Canvas.SetLeft(rec, left);
+            CreateRectangle(type, left, top, width, height, color, false);
         }
 
-        // Create Labels on Rectangles & Images
-        private void CreateImageLabels(string boundingBox, string text)
+        private void CreateRectangle(string type, int left,int top, int width, int height, Brush color, bool highlight)
+        {
+            try
+            {
+                // Create the rectangle
+                Rectangle rec = new Rectangle()
+                {
+                    Width = width,
+                    Height = height,
+                    Stroke = color,
+                    StrokeThickness = 1,
+                };
+                if (highlight)
+                {
+                    rec.Fill = _highlightColor;
+                }
+
+                // Add  rectangle object to a canvas
+                switch (type)
+                {
+                    case "line":
+                        canvasLines.Children.Add(rec);
+                        break;
+                    case "region":
+                        canvasRegions.Children.Add(rec);
+                        break;
+                    case "word":
+                        canvasRegions.Children.Add(rec);
+                        break;
+                    default:
+                        canvasWords.Children.Add(rec);
+                        break;
+                }
+
+                Canvas.SetTop(rec, top);
+                Canvas.SetLeft(rec, left);
+            }
+            catch
+            {
+                MessageBox.Show("An exception handled while creating line rectangle");
+            }
+        }
+
+
+        // Create Labels on Rectangles & Images for OCR output and RecognizeText output
+        private void CreateImageLabelsAndRectangle(string boundingBox, string text)
         {
             // Detect the edges & size values of the box
             int[] values = Array.ConvertAll(boundingBox.Split(','), int.Parse);
@@ -212,50 +304,84 @@ namespace OCRVisualizer
             int left = (int)(values[0] / DPIrenderSize);
             int top = (int)(values[1] / DPIrenderSize);
 
-            // Create the rectangle
-            Rectangle rec = new Rectangle()
-            {
-                Width = width,
-                Height = height,
-                Fill = Brushes.Yellow,
-                Stroke = Brushes.Red,
-                StrokeThickness = 1,
-                Opacity = 0.8,
-            };
-
-            //Create Label
-            Label lbl = new Label()
-            {
-                Content = text,
-                FontSize = height + 2
-            };
-
-            // Add  rectangle object to a canvas
-            canvasWords.Children.Add(rec);
-            Canvas.SetTop(rec, top);
-            Canvas.SetLeft(rec, left);
-
-            // Add Labels on top of rectangles
-            canvasText.Children.Add(lbl);
-            Canvas.SetTop(lbl, top-10);
-            Canvas.SetLeft(lbl, left-5);
+            CreateImageLabelsAndRectangle(text, width, height, left, top);
         }
 
+        private void CreateImageLabelsAndRectangle(int[] boundingBox, string text)
+        {
+            int[] values = boundingBox;
+            int width = (int)((values[2] - values[0]) / DPIrenderSize);
+            int height = (int)((values[7] - values[1]) / DPIrenderSize);
+            int left = (int)(values[0] / DPIrenderSize);
+            int top = (int)(values[1] / DPIrenderSize);
+
+            CreateImageLabelsAndRectangle(text, width, height, left, top);
+        }
+
+        private void CreateImageLabelsAndRectangle(string text, int width, int height, int left, int top)
+        {
+            try
+            {
+                // Create the rectangle
+                Rectangle rec = new Rectangle()
+                {
+                    Width = width,
+                    Height = height,
+                    Fill = Brushes.Yellow,
+                    Stroke = Brushes.Red,
+                    StrokeThickness = 1,
+                    Opacity = 0.8,
+                };
+
+                //Create Label
+                Label lbl = new Label()
+                {
+                    Content = text,
+                    FontSize = height
+                };
+
+                // Add  rectangle object to a canvas
+                canvasWords.Children.Add(rec);
+                Canvas.SetTop(rec, top);
+                Canvas.SetLeft(rec, left);
+
+                // Add Labels on top of rectangles
+                canvasText.Children.Add(lbl);
+                Canvas.SetTop(lbl, top - 10);
+                Canvas.SetLeft(lbl, left - 5);
+            }
+            catch
+            {
+                MessageBox.Show("An exception handled while creating a text label");
+            }
+        }
+
+
         // Extract Text Line by Lines
-        private string ExtractTextByRegions(OCRVision ocrVision)
+        private string ExtractTextByRegions(OCRText ocrOutput)
         {
             string resultText = String.Empty;
 
-            foreach (Region ereg in ocrVision.Regions)
+            foreach (Region ereg in ocrOutput.Regions)
             {
-                resultText += string.Join(" ", from WLine sline in ereg.Lines
+                resultText += string.Join("\n", from WLine sline in ereg.Lines
                                                from Word sword in sline.Words
-                                               select (string)sword.Text) + "\n";
+                                               select (string)sword.Text);
             }
 
             return resultText;
         }
-      
+
+        private string ExtractTextByRegions(RecognizeText ocrOutput)
+        {
+            string resultText = String.Empty;
+
+            resultText += string.Join("\n", from LineNew sline in ocrOutput.RecognitionResult.Lines
+                                               select sline.Text);
+
+            return resultText;
+        }
+
         // Microsoft Cognitive Services Computer Vision OCR Method
         private async Task<string> MakeOCRRequest(string imageFilePath)
         {
@@ -266,13 +392,24 @@ namespace OCRVisualizer
                 // Request headers.
                 client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
 
-                // Request parameters. 
-                // The language parameter doesn't specify a language, so the method detects it automatically.
-                // The detectOrientation parameter is set to true, so the method detects and corrects text orientation before detecting text.
-                string requestParameters = String.Format("language={0}&detectOrientation=true",docLanguage.Split()[0]);
+                string uri = uriEndpoint;
+                if (isNewOCREnabled)
+                {
+                    string requestParameters = String.Format("?mode={0}", (bool)checkboxTextMode.IsChecked ? "Handwritten" : "Printed");
+                    // Assemble the URI for the REST API method.
+                    uri += "recognizeText" + requestParameters;
+                }
+                else
+                {
+                    // Request parameters. 
+                    // The language parameter doesn't specify a language, so the method detects it automatically.
+                    // The detectOrientation parameter is set to true, so the method detects and corrects text orientation before detecting text.
+                    string requestParameters = String.Format("language={0}&detectOrientation=true", docLanguage.Split()[0]);
+                    // Assemble the URI for the REST API method.
+                    uri += "ocr?" + requestParameters;
+                }
 
-                // Assemble the URI for the REST API method.
-                string uri = uriEndpoint + "?" + requestParameters;
+                
                 HttpResponseMessage response;
 
                 // Read the contents of the specified local image
@@ -290,9 +427,36 @@ namespace OCRVisualizer
                     response = await client.PostAsync(uri, content);
                 }
 
-                // Asynchronously get the JSON response.
-                string contentString = await response.Content.ReadAsStringAsync();
-                return contentString;
+                if (isNewOCREnabled)
+                {
+                    string operationLocation = null;
+
+                    // The response contains the URI to retrieve the result of the process.
+                    if (response.IsSuccessStatusCode)
+                    {
+                        operationLocation = response.Headers.GetValues("Operation-Location").FirstOrDefault();
+                    }
+
+                    string contentString;
+                    int i = 0;
+                    do
+                    {
+                        System.Threading.Thread.Sleep(1000);
+                        response = await client.GetAsync(operationLocation);
+                        contentString = await response.Content.ReadAsStringAsync();
+                        ++i;
+                    }
+                    while (i < 10 && contentString.IndexOf("\"status\":\"Succeeded\"") == -1);
+
+                    return contentString;
+
+                }
+                else
+                {
+                    // Asynchronously get the JSON response.
+                    string contentString = await response.Content.ReadAsStringAsync();
+                    return contentString;
+                }
             }
             catch (Exception e)
             {
@@ -312,7 +476,7 @@ namespace OCRVisualizer
         }
 
         // Update Setting Panel paramaters
-        public void UpdateConnectionKeys(string subscriptionValue, string endpointValue, string languageValue)
+        public void UpdateConnectionKeys(string subscriptionValue, string endpointValue, string languageValue, bool isnewocrenabled)
         {
             XmlDocument appconfigFile = new XmlDocument();
             appconfigFile.Load(AppDomain.CurrentDomain.BaseDirectory + "App.config");
@@ -323,6 +487,7 @@ namespace OCRVisualizer
                 if (childNode.Attributes["key"].Value == "subscriptionKey") childNode.Attributes["value"].Value = subscriptionValue;
                 else if (childNode.Attributes["key"].Value == "endpointRegion") childNode.Attributes["value"].Value = endpointValue;
                 else if (childNode.Attributes["key"].Value == "documentLanguage") childNode.Attributes["value"].Value = languageValue;
+                else if (childNode.Attributes["key"].Value == "isNewOCREnabled") childNode.Attributes["value"].Value = isnewocrenabled == true? "true":"false";
             }
 
             appconfigFile.Save(AppDomain.CurrentDomain.BaseDirectory + "App.config");
@@ -390,6 +555,11 @@ namespace OCRVisualizer
             listBoxKeyValue.Items.Clear();
 
             OCRResponse = await MakeOCRRequest(filePath);
+            if (isNewOCREnabled)
+{
+                ExtractTextAndRegionsNewAPIFromResponse();
+            }
+            else 
             ExtractTextAndRegionsFromResponse();
 
         }
@@ -467,6 +637,7 @@ namespace OCRVisualizer
             }
             else
             {
+                checkboxIsNewOCR.IsChecked = isNewOCREnabled;
                 txtSubscriptionKey.Text = subscriptionKey;
                 txtEndPoint.Text = uriEndpoint;
                 txtKeys.Text = searchKeys;
@@ -480,8 +651,9 @@ namespace OCRVisualizer
             subscriptionKey = txtSubscriptionKey.Text;
             uriEndpoint = txtEndPoint.Text;
             docLanguage = (comboLanguage.SelectedValue as ComboBoxItem).Content as string;
+            isNewOCREnabled = (bool)checkboxIsNewOCR.IsChecked;
 
-            UpdateConnectionKeys(subscriptionKey, uriEndpoint, docLanguage);
+            UpdateConnectionKeys(subscriptionKey, uriEndpoint, docLanguage, isNewOCREnabled);
         }
 
         private void ComboLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -492,6 +664,13 @@ namespace OCRVisualizer
             {
                 docLanguage = "unk";
             }
+        }
+
+        // Enable/Disable Language due to selection of checkbox
+        private void NewOCRCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            isNewOCREnabled = (bool)(sender as CheckBox).IsChecked;
+            comboLanguage.IsEnabled = !isNewOCREnabled;
         }
 
         private void ButtonKeyValue_Click(object sender, RoutedEventArgs e)
