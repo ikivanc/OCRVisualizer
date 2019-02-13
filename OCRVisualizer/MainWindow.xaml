@@ -18,9 +18,12 @@
                 <Canvas x:Name="canvasText"/>
             </Canvas>
         </ScrollViewer>
-        <StackPanel x:Name="stckOutput" Orientation="Vertical" VerticalAlignment="Bottom" Height="60" Visibility="Collapsed" Margin="5,0,5,5">
+        <StackPanel x:Name="stckOutput" Orientation="Vertical" VerticalAlignment="Bottom" Height="60" Margin="5,0,5,5" Visibility="Collapsed">
             <TextBlock Text="Output:"/>
-            <TextBox x:Name="txtOcrOutput" Height="41" TextWrapping="Wrap" Margin="0,0,0,2" />
+            <Grid Margin="0" Height="41.1428571428571">
+                <TextBox x:Name="txtOcrOutput" TextWrapping="Wrap" Margin="0,0,80,0.143" />
+                <Button x:Name="btnSpeech" Content="Speech" Width="70" HorizontalAlignment="Right" Margin="0,0,5,0.143" Click="BtnSpeech_Click"/>
+            </Grid>
         </StackPanel>
         <Grid x:Name="gridSettings" Margin="0" Visibility="Collapsed">
             <Rectangle x:Name="recSettings" Fill="#B2A6A6A6" Margin="0" MouseLeftButtonDown="MouseLeftButtonKeyValue_Down"/>

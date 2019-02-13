@@ -1,13 +1,16 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OCRVisualizer.Model;
+using OCRVisualizer.Service;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,6 +19,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace OCRVisualizer
 {
@@ -33,6 +37,9 @@ namespace OCRVisualizer
         // Microsoft Cognitive Services Computer Vision Endpoint details & Settings saved in App.config
         private string subscriptionKey = ConfigurationManager.AppSettings["subscriptionKey"].ToString();
         private string uriEndpoint = ConfigurationManager.AppSettings["endpointRegion"].ToString();
+        private string subscriptionKeyTTS = ConfigurationManager.AppSettings["subscriptionKeyTTS"].ToString();
+        private string uriEndpointTTS = ConfigurationManager.AppSettings["endpointRegionTTS"].ToString();
+        private string endpointHostTTS = ConfigurationManager.AppSettings["endpointHostTTS"].ToString();
         private string docLanguage = ConfigurationManager.AppSettings["documentLanguage"].ToString();
         private string searchKeys = ConfigurationManager.AppSettings["searchValues"].ToString();
         private int searchKeysWidth = Convert.ToInt32(ConfigurationManager.AppSettings["searchValuesWidth"].ToString());
@@ -673,6 +680,7 @@ namespace OCRVisualizer
             comboLanguage.IsEnabled = !isNewOCREnabled;
         }
 
+
         private void ButtonKeyValue_Click(object sender, RoutedEventArgs e)
         {
             SwitchGridVisibility(gridKeyVal);
@@ -695,5 +703,88 @@ namespace OCRVisualizer
             else
                 gridSettings.Visibility = Visibility.Collapsed;
         }
+   
+        private async void BtnSpeech_Click(object sender, RoutedEventArgs e)
+        {
+            Console.Write("What would you like to convert to speech? ");
+            string text = txtOcrOutput.Text.Replace('\n',' ').Replace('-',' ');
+
+            // Gets an access token
+            string accessToken;
+            Console.WriteLine("Attempting token exchange. Please wait...\n");
+
+            // Add your subscription key here
+            // If your resource isn't in WEST US, change the endpoint
+            Authentication auth = new Authentication( uriEndpointTTS, subscriptionKeyTTS);
+            try
+            {
+                accessToken = await auth.FetchTokenAsync().ConfigureAwait(false);
+                Console.WriteLine("Successfully obtained an access token. \n");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to obtain an access token.");
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine(ex.Message);
+                return;
+            }
+            string host = endpointHostTTS;
+
+            // Create SSML document.
+            XDocument body = new XDocument(
+                    new XElement("speak",
+                        new XAttribute("version", "1.0"),
+                        new XAttribute(XNamespace.Xml + "lang", "tr-TR"),
+                        new XElement("voice",
+                            new XAttribute(XNamespace.Xml + "lang", "tr-TR"),
+                            new XAttribute(XNamespace.Xml + "gender", "Female"),
+                            new XAttribute("name", "Microsoft Server Speech Text to Speech Voice (tr-TR, SedaRUS)"),
+                            text)));
+
+            using (HttpClient client = new HttpClient())
+            {
+                using (HttpRequestMessage request = new HttpRequestMessage())
+                {
+                    // Set the HTTP method
+                    request.Method = HttpMethod.Post;
+                    // Construct the URI
+                    request.RequestUri = new Uri(host);
+                    // Set the content type header
+                    request.Content = new StringContent(body.ToString(), Encoding.UTF8, "application/ssml+xml");
+                    // Set additional header, such as Authorization and User-Agent
+                    request.Headers.Add("Authorization", "Bearer " + accessToken);
+                    request.Headers.Add("Connection", "Keep-Alive");
+                    // Update your resource name
+                    request.Headers.Add("User-Agent", "ZirveSpeechOCR");
+                    // Audio output format. See API reference for full list.
+                    request.Headers.Add("X-Microsoft-OutputFormat", "riff-24khz-16bit-mono-pcm");
+                    // Create a request
+                    Console.WriteLine("Calling the TTS service. Please wait... \n");
+                    using (HttpResponseMessage response = await client.SendAsync(request).ConfigureAwait(false))
+                    {
+                        response.EnsureSuccessStatusCode();
+                        // Asynchronously read the response
+                        using (Stream dataStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                        {
+                            //Speech to Text
+                            SoundPlayer player = new System.Media.SoundPlayer(dataStream);
+                            player.PlaySync();
+
+                            Console.WriteLine("Your speech file is being written to file...");
+                            using (FileStream fileStream = new FileStream(@"ocroutput"+DateTime.Now.ToLongDateString()+".wav", FileMode.Create, FileAccess.Write, FileShare.Write))
+                            {
+                                await dataStream.CopyToAsync(fileStream).ConfigureAwait(false);
+                                fileStream.Close();
+                            }
+                     
+                            
+                            Console.WriteLine("\nYour file is ready. Press any key to exit.");
+                            Console.ReadLine();
+                        }
+                    }
+                }
+            }
+        }
+    
     }
 }
