@@ -766,7 +766,7 @@ namespace OCRVisualizer
                         // Asynchronously read the response
                         using (Stream dataStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
                         {
-                            //Speech to Text
+                            //Text to Speech
                             SoundPlayer player = new System.Media.SoundPlayer(dataStream);
                             player.PlaySync();
 
@@ -777,7 +777,6 @@ namespace OCRVisualizer
                                 fileStream.Close();
                             }
                      
-                            
                             Console.WriteLine("\nYour file is ready. Press any key to exit.");
                             Console.ReadLine();
                         }
