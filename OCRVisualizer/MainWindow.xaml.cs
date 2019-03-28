@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Xml;
+
 
 namespace OCRVisualizer
 {
@@ -43,6 +45,7 @@ namespace OCRVisualizer
         private string OCRResponse = String.Empty;
         private double DPIrenderSize;
         private bool regionVis = true, lineVis = true, wordVis = true, textVis = true;
+        private string filePath = String.Empty;
 
 
         public MainWindow()
@@ -385,82 +388,80 @@ namespace OCRVisualizer
         // Microsoft Cognitive Services Computer Vision OCR Method
         private async Task<string> MakeOCRRequest(string imageFilePath)
         {
-            try
+            HttpClient client = new HttpClient();
+
+            // Request headers.
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
+
+            string uri = uriEndpoint;
+            if (isNewOCREnabled)
             {
-                HttpClient client = new HttpClient();
-
-                // Request headers.
-                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
-
-                string uri = uriEndpoint;
-                if (isNewOCREnabled)
-                {
-                    string requestParameters = String.Format("?mode={0}", (bool)checkboxTextMode.IsChecked ? "Handwritten" : "Printed");
-                    // Assemble the URI for the REST API method.
-                    uri += "recognizeText" + requestParameters;
-                }
-                else
-                {
-                    // Request parameters. 
-                    // The language parameter doesn't specify a language, so the method detects it automatically.
-                    // The detectOrientation parameter is set to true, so the method detects and corrects text orientation before detecting text.
-                    string requestParameters = String.Format("language={0}&detectOrientation=true", docLanguage.Split()[0]);
-                    // Assemble the URI for the REST API method.
-                    uri += "ocr?" + requestParameters;
-                }
+                string requestParameters = String.Format("?mode={0}", (bool)checkboxTextMode.IsChecked ? "Handwritten" : "Printed");
+                // Assemble the URI for the REST API method.
+                uri += "recognizeText" + requestParameters;
+            }
+            else
+            {
+                // Request parameters. 
+                // The language parameter doesn't specify a language, so the method detects it automatically.
+                // The detectOrientation parameter is set to true, so the method detects and corrects text orientation before detecting text.
+                string requestParameters = String.Format("language={0}&detectOrientation=true", docLanguage.Split()[0]);
+                // Assemble the URI for the REST API method.
+                uri += "ocr?" + requestParameters;
+            }
 
                 
-                HttpResponseMessage response;
+            HttpResponseMessage response;
 
-                // Read the contents of the specified local image
-                // into a byte array.
-                byte[] byteData = GetImageAsByteArray(imageFilePath);
+            // Read the contents of the specified local image
+            // into a byte array.
+            byte[] byteData = GetImageAsByteArray(imageFilePath);
 
-                // Add the byte array as an octet stream to the request body.
-                using (ByteArrayContent content = new ByteArrayContent(byteData))
+            // Add the byte array as an octet stream to the request body.
+            using (ByteArrayContent content = new ByteArrayContent(byteData))
+            {
+                // This example uses the "application/octet-stream" content type.
+                // The other content types you can use are "application/json" and "multipart/form-data".
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+                // Asynchronously call the REST API method.
+                response = await client.PostAsync(uri, content);
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    // This example uses the "application/octet-stream" content type.
-                    // The other content types you can use are "application/json" and "multipart/form-data".
-                    content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-
-                    // Asynchronously call the REST API method.
-                    response = await client.PostAsync(uri, content);
-                }
-
-                if (isNewOCREnabled)
-                {
-                    string operationLocation = null;
-
-                    // The response contains the URI to retrieve the result of the process.
-                    if (response.IsSuccessStatusCode)
-                    {
-                        operationLocation = response.Headers.GetValues("Operation-Location").FirstOrDefault();
-                    }
-
-                    string contentString;
-                    int i = 0;
-                    do
-                    {
-                        System.Threading.Thread.Sleep(1000);
-                        response = await client.GetAsync(operationLocation);
-                        contentString = await response.Content.ReadAsStringAsync();
-                        ++i;
-                    }
-                    while (i < 10 && contentString.IndexOf("\"status\":\"Succeeded\"") == -1);
-
-                    return contentString;
-
-                }
-                else
-                {
-                    // Asynchronously get the JSON response.
-                    string contentString = await response.Content.ReadAsStringAsync();
-                    return contentString;
+                    throw new Exception($"Call to OCR failed with {response.StatusCode}");
                 }
             }
-            catch (Exception e)
+
+            if (isNewOCREnabled)
             {
-                return e.Message;
+                string operationLocation = null;
+
+                // The response contains the URI to retrieve the result of the process.
+                if (response.IsSuccessStatusCode)
+                {
+                    operationLocation = response.Headers.GetValues("Operation-Location").FirstOrDefault();
+                }
+
+                string contentString;
+                int i = 0;
+                do
+                {
+                    System.Threading.Thread.Sleep(1000);
+                    response = await client.GetAsync(operationLocation);
+                    contentString = await response.Content.ReadAsStringAsync();
+                    ++i;
+                }
+                while (i < 10 && contentString.IndexOf("\"status\":\"Succeeded\"") == -1);
+
+                return contentString;
+
+            }
+            else
+            {
+                // Asynchronously get the JSON response.
+                string contentString = await response.Content.ReadAsStringAsync();
+                return contentString;
             }
         }
 
@@ -516,52 +517,65 @@ namespace OCRVisualizer
         // Browse an image to send to Microsoft Cognitive Services OCR endpoint
         private async void ButtonBrowse_Click(object sender, RoutedEventArgs e)
         {
-            var openDlg = new Microsoft.Win32.OpenFileDialog();
-            openDlg.Filter = "JPEG and PNG Images|*.jpg;*.jpeg;*.png";
-            bool? result = openDlg.ShowDialog(this);
-            if (!(bool)result)
+            try
             {
-                return;
+                var openDlg = new Microsoft.Win32.OpenFileDialog();
+                openDlg.Filter = "JPEG and PNG Images|*.jpg;*.jpeg;*.png";
+                bool? result = openDlg.ShowDialog(this);
+                if (!(bool)result)
+                {
+                    return;
+                }
+
+                filePath = openDlg.FileName;
+                Uri fileUri = new Uri(filePath);
+                BitmapImage bitmapSource = new BitmapImage();
+                bitmapSource.BeginInit();
+                bitmapSource.CacheOption = BitmapCacheOption.None;
+                bitmapSource.UriSource = fileUri;
+                bitmapSource.EndInit();
+
+                canvasImg.Height = bitmapSource.Height;
+                canvasImg.Width = bitmapSource.Width;
+
+                canvasText.Height = bitmapSource.Height;
+                canvasText.Width = bitmapSource.Width;
+
+                // This is for calculating RenderSize on the screen
+                DPIrenderSize = bitmapSource.PixelHeight / bitmapSource.Height;
+
+                imgInvoice.Stretch = Stretch.Fill;
+                imgInvoice.Source = bitmapSource;
+
+                //Clear previous queries if exists.
+                canvasText.Children.Clear();
+                canvasRegions.Children.Clear();
+                canvasLines.Children.Clear();
+                canvasWords.Children.Clear();
+                textvalues.Clear();
+                gridKeyVal.Visibility = Visibility.Collapsed;
+                stckKeyValResult.Visibility = Visibility.Collapsed;
+                listBoxKeyValue.Items.Clear();
+
+                await CallOCR();
             }
+            catch(Exception ex)
+            {
+                MessageBox.Show($"Exception thrown: {ex.Message}");
+            }
+        }
 
-            string filePath = openDlg.FileName;
-            Uri fileUri = new Uri(filePath);
-            BitmapImage bitmapSource = new BitmapImage();
-            bitmapSource.BeginInit();
-            bitmapSource.CacheOption = BitmapCacheOption.None;
-            bitmapSource.UriSource = fileUri;
-            bitmapSource.EndInit();
-
-            canvasImg.Height = bitmapSource.Height;
-            canvasImg.Width = bitmapSource.Width;
-
-            canvasText.Height = bitmapSource.Height;
-            canvasText.Width = bitmapSource.Width;
-
-            // This is for calculating RenderSize on the screen
-            DPIrenderSize = bitmapSource.PixelHeight / bitmapSource.Height;
-            
-            imgInvoice.Stretch = Stretch.Fill;
-            imgInvoice.Source = bitmapSource;
-
-            //Clear previous queries if exists.
-            canvasText.Children.Clear();
-            canvasRegions.Children.Clear();
-            canvasLines.Children.Clear();
-            canvasWords.Children.Clear();
-            textvalues.Clear();
-            gridKeyVal.Visibility = Visibility.Collapsed;
-            stckKeyValResult.Visibility = Visibility.Collapsed;
-            listBoxKeyValue.Items.Clear();
-
+        private async Task CallOCR()
+        {
             OCRResponse = await MakeOCRRequest(filePath);
             if (isNewOCREnabled)
-{
+            {
                 ExtractTextAndRegionsNewAPIFromResponse();
             }
-            else 
-            ExtractTextAndRegionsFromResponse();
-
+            else
+            {
+                ExtractTextAndRegionsFromResponse();
+            }
         }
 
         // Change Visibility of Bounding Box Layers
@@ -654,6 +668,8 @@ namespace OCRVisualizer
             isNewOCREnabled = (bool)checkboxIsNewOCR.IsChecked;
 
             UpdateConnectionKeys(subscriptionKey, uriEndpoint, docLanguage, isNewOCREnabled);
+
+            CallOCR();
         }
 
         private void ComboLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
